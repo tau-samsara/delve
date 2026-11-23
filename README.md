@@ -4,6 +4,8 @@ Quality-of-life tools for [Spelunkr](https://spelunkr.tv/). Delve is a userscrip
 
 It uses the site's own fonts, colors and buttons, so it looks like part of the site.
 
+![Delve's Wide view of the Spelunkr guide](images/guide-wide.png)
+
 > **Status:** Delve is being rewritten from scratch, and `delve.user.js` is the rewrite. Features from the older script are being brought over one at a time.
 
 ## Install
@@ -20,6 +22,8 @@ The script only runs on `spelunkr.tv`. It makes one outside request, to `data.sp
 
 Click **DELVE** in the top bar (at the far right, after the clock). It's on every page of the site; on the landing page it sits with the Directory, About and Updates links. A drawer slides in from the right. Click anywhere outside it, or the **✕**, to close it. The drawer also closes when you go to another page.
 
+![The DELVE drawer](images/drawer.png)
+
 ## Features
 
 ### View type
@@ -35,6 +39,8 @@ Changes how the guide page is arranged. Pick one in the drawer:
 
 **Video side** (Left / Right) chooses which half the video takes in Split, and in Default and Wide it puts the video column on that side too.
 
+![Split view with the video on the left](images/split.png)
+
 Wide and Split also apply to watch mode and channel mode, with smooth transitions between modes. On phone-width windows (768 px and under) the site's own single-column layout is used and Delve steps aside.
 
 ### Program info
@@ -49,9 +55,15 @@ Click a program in the guide to see its details in the info column under the vid
 
 Click the same program a second time to tune the preview to it. **<< Now Playing** takes you back. The IMDb and Archive links also appear under the currently playing program in the guide, watch and channel views.
 
+![Program info shown after clicking a program](images/program-info.png)
+
 ### Favorites
 
 Every channel in the guide has a star at the left. Click it to mark or unmark a channel (it won't tune the channel). Use the **★ Favorites** button in the guide toolbar to show only your favorites.
+
+![Starred channels in the guide](images/favorites.png)
+
+![The Favorites button on, showing only starred channels](images/favorites-filtered.png)
 
 ### Sort
 
@@ -61,6 +73,12 @@ The **Sort** drop-down in the guide toolbar orders the channels by:
 - Name
 - Most watched (by viewer count)
 - Favorites first
+
+![The Sort drop-down open](images/guide-sort.png)
+
+![Sorted by Most watched](images/guide-sort-most-watched.png)
+
+![Sorted with favorites first](images/guide-sort-favorites.png)
 
 ### Extended guide
 
@@ -73,6 +91,8 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 - **Window** (− / +) on the toolbar sets how much time fits on screen: 30 minutes, 1, 3, 6 or 12 hours.
 - **Now** jumps back to the present.
 - Click and drag to scroll the guide, or use the mouse wheel or trackpad.
+
+![The extended guide with the Now line and Window controls](images/extended-guide.png)
 
 ### Volume and mute
 
