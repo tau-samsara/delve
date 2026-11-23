@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.30.13
+// @version      0.30.14
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -643,6 +643,13 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (text != null) e.textContent = text;
     return e;
   }
+  const warnedMissing = new Set();
+  function warnMissing(selector, unavailableFeature) {
+    const message = selector + ' not found; ' + unavailableFeature + ' unavailable';
+    if (warnedMissing.has(message)) return;
+    warnedMissing.add(message);
+    console.warn('[delve] ' + message);
+  }
   const fmtTime = d => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const fmtDur = sec => {
     const m = Math.round(sec / 60);
@@ -667,7 +674,10 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
 
   function ensurePanel() {
     const col = document.querySelector('.app--guide .stage-info-col');
-    if (!col) return null;
+    if (!col) {
+      if (document.querySelector('.app--guide')) warnMissing('.stage-info-col', 'Program information');
+      return null;
+    }
     if (!panel) panel = el('div', 'delve-prog');
     if (panel.parentNode !== col) {
       const anchor = col.querySelector('.guide-actions-divider') || col.querySelector('.guide-actions');
@@ -682,7 +692,10 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     const row = channelId && document.querySelector('.app--guide .grid-row[data-channel="' + CSS.escape(channelId) + '"]');
     const name = row && row.querySelector('.grid-channel-name-text');
     const num = row && row.querySelector('.grid-channel-num');
-    if (!siteHead || !name || !num) return null;
+    if (!siteHead || !name || !num) {
+      if (row) warnMissing(!siteHead ? '.guide-info-channel-header' : !name ? '.grid-channel-name-text' : '.grid-channel-num', 'Program information');
+      return null;
+    }
     const head = siteHead.cloneNode(true);
     const setText = (sel, txt) => { const n = head.querySelector(sel); if (n) n.textContent = txt; };
     setText('.guide-info-channel-name', name.textContent);
@@ -1118,7 +1131,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     if (!settings.favoritesOn) { document.querySelectorAll('.delve-star').forEach(n => n.remove()); return; }
     rows.forEach(row => {
       const info = row.querySelector('.grid-channel-info');
-      if (!info) return;
+      if (!info) { warnMissing('.grid-channel-info', 'Favorites'); return; }
       let star = info.querySelector(':scope > .delve-star');
       if (!star) {
         star = el('button', 'delve-star');
@@ -1450,7 +1463,10 @@ html[data-delve-wide] .app--watch:not(.app--channel) .tv-grid { flex: 0 0 auto; 
     // measure a row that is shown: rows hidden by the Favorites filter have no size
     const mrow = srows.find(r => !r.hasAttribute('data-delve-hide')) || srows[0];
     const info0 = mrow && mrow.querySelector('.grid-channel-info'), progs0 = mrow && mrow.querySelector('.grid-programs');
-    if (!info0 || !progs0) return;
+    if (!info0 || !progs0) {
+      if (mrow) warnMissing(!info0 ? '.grid-channel-info' : '.grid-programs', 'Extended guide');
+      return;
+    }
     const infoW = Math.round(info0.getBoundingClientRect().width), progW = progs0.getBoundingClientRect().width;
     if (!infoW || progW < 80) return;   // not laid out yet (or caught mid-animation): try again on the next pass
     const pxh = progW / settings.zoom;           // pixels per hour
@@ -1473,7 +1489,7 @@ html[data-delve-wide] .app--watch:not(.app--channel) .tv-grid { flex: 0 0 auto; 
       body.style.setProperty('--dw-head-bg', getComputedStyle(sbody.querySelector('.grid-time-header')).backgroundColor);
       body.style.setProperty('--dw-grid-bg', getComputedStyle(grid).backgroundImage);
       body.style.setProperty('--dw-line', getComputedStyle(srows[0]).borderBottomColor);
-    } catch (e) { /* the defaults in the CSS apply */ }
+    } catch (e) { warnMissing('.grid-time-header', 'Extended guide site colors'); }
 
     // hour row
     const head = el('div', 'grid-time-header');
