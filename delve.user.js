@@ -4,6 +4,8 @@
 // @author       tau-samsara
 // @version      0.30.11
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
+// @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
+// @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @match        https://spelunkr.tv/*
 // @run-at       document-start
 // @grant        GM_getValue
