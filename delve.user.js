@@ -1432,7 +1432,9 @@ html[data-delve-wide] .app--watch:not(.app--channel) .tv-grid { flex: 0 0 auto; 
 
   function buildWide(grid, sbody) {
     const srows = Array.from(sbody.querySelectorAll(':scope > .grid-row'));
-    const info0 = srows[0] && srows[0].querySelector('.grid-channel-info'), progs0 = srows[0] && srows[0].querySelector('.grid-programs');
+    // measure a row that is shown: rows hidden by the Favorites filter have no size
+    const mrow = srows.find(r => !r.hasAttribute('data-delve-hide')) || srows[0];
+    const info0 = mrow && mrow.querySelector('.grid-channel-info'), progs0 = mrow && mrow.querySelector('.grid-programs');
     if (!info0 || !progs0) return;
     const infoW = Math.round(info0.getBoundingClientRect().width), progW = progs0.getBoundingClientRect().width;
     if (!infoW || progW < 80) return;   // not laid out yet (or caught mid-animation): try again on the next pass
