@@ -13,6 +13,7 @@ It uses the site's own fonts, colors and buttons, so it looks like part of the s
 1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
 2. Click **[Install Delve](https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js)**. Tampermonkey opens an install page; click **Install**.
 3. Open [spelunkr.tv](https://spelunkr.tv/). A **DELVE** button now appears in the top bar.
+4. Click **DELVE** and switch on the features you want. They are all off until you do.
 
 Installing from that link also turns on automatic updates: Tampermonkey checks for new versions on its own (daily by default). If you pasted the script in by hand instead, it won't update itself.
 
@@ -100,9 +101,9 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 - Whether you left the video muted is remembered too. If you left it unmuted, the first click or key press on the page unmutes it (browsers don't allow sound before that).
 - A mute button is added to the guide's controls when the site hasn't drawn its own.
 
-### Turning features off
+### Turning features on
 
-The drawer has an On/Off switch for each of these, all off by default:
+The drawer has an On/Off switch for each of these. They are all **off by default**, so turn on the ones you want:
 
 - Program information
 - Favorites
