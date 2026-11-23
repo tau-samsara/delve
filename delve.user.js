@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.30.14
+// @version      0.30.15
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -11,7 +11,9 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
+// @grant        GM_info
 // @connect      data.spelunkr.tv
+// @connect      raw.githubusercontent.com
 // ==/UserScript==
 
 // MIT License
@@ -281,6 +283,19 @@ html[data-delve-layout="split"] .app--guide .stage--guide .stage-info-col { flex
 .delve-toggle { display: block; width: 100%; }
 .delve-select:focus-visible, .delve-seg button:focus-visible, .delve-toggle:focus-visible, .delve-close:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
 .header-nav-delve { cursor: pointer; }
+/* A newer version is published: the DELVE button pulses with a gold glow. */
+@keyframes delve-update-glow {
+  0%, 100% { box-shadow: 0 0 3px 0 var(--gold, #ffd740), 0 0 6px 1px rgba(255, 215, 64, .35); }
+  50% { box-shadow: 0 0 8px 2px var(--gold, #ffd740), 0 0 16px 4px rgba(255, 215, 64, .55); }
+}
+html[data-delve-update] [data-delve-btn] { border-color: var(--gold, #ffd740); animation: delve-update-glow 2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  html[data-delve-update] [data-delve-btn] { animation: none; box-shadow: 0 0 8px 2px var(--gold, #ffd740); }
+}
+.delve-footer { margin-top: calc(var(--space-4, 16px) * 1.5); padding-top: var(--space-4, 16px); border-top: 1px solid var(--border-color, rgb(38, 82, 178)); }
+.delve-update-status { display: block; margin-bottom: var(--space-3, 12px); font-size: 12px; }
+.delve-update-btn { display: block; box-sizing: border-box; width: 100%; text-align: center; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.delve-update-btn:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
 /* The site orders header items with flex "order" (clock last), so give the button the highest. */
 html .prevue-header-bar > .header-nav-item.header-nav-delve { order: 99; margin-left: var(--space-2, 8px); }
 /* Phone: DELVE sits by the menu button; tighten the header so the clock stays on screen (B2). */
@@ -422,7 +437,21 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
       return row;
     });
 
-    drawer.append(head, viewRow, sideRow, ...featRows);
+    const footer = document.createElement('div');
+    footer.className = 'delve-footer';
+    const updateStatus = document.createElement('span');
+    updateStatus.className = 'delve-update-status';
+    const updateBtn = document.createElement('a');
+    updateBtn.className = 'delve-update-btn bbtn bbtn-outline';
+    updateBtn.href = SCRIPT_URL;
+    updateBtn.addEventListener('click', e => {
+      if (updateAvailable()) return;   // the link installs
+      e.preventDefault();
+      checkForUpdate(true);
+    });
+    footer.append(updateStatus, updateBtn);
+
+    drawer.append(head, viewRow, sideRow, ...featRows, footer);
     root.append(scrim, drawer);
   }
 
@@ -440,6 +469,14 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
       b.setAttribute('aria-pressed', String(on));
       b.classList.toggle('popup-toggle-btn--on', on);
     });
+    const available = updateAvailable();
+    drawer.querySelector('.delve-update-status').textContent = available
+      ? updateState.latest + ' available (installed ' + installedVersion + ')'
+      : installedVersion + (updateState.latest ? ' (up to date)' : '');
+    const updateBtn = drawer.querySelector('.delve-update-btn');
+    updateBtn.textContent = available ? 'Update Available' : 'Check for Updates';
+    updateBtn.classList.toggle('bbtn-gold', available);
+    updateBtn.classList.toggle('bbtn-outline', !available);
   }
 
   function isOpen() { return !!drawer && drawer.classList.contains('open'); }
@@ -466,6 +503,76 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
 
   function setExpanded(v) {
     document.querySelectorAll('[data-delve-btn]').forEach(b => b.setAttribute('aria-expanded', String(v)));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Update check. About once an hour (shared across tabs) the published @version is read from GitHub. A newer one makes
+  // the DELVE button glow and the drawer's Update button gold; Update opens the script URL, which Tampermonkey installs.
+  // ---------------------------------------------------------------------------
+  const SCRIPT_URL = 'https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js';
+  const UPDATE_KEY = 'updateCheck';
+  const UPDATE_EVERY_MS = 60 * 60 * 1000;
+  const VERSION_RE = /^\d+(\.\d+){0,2}$/;
+  const installedVersion = (typeof GM_info === 'object' && GM_info.script && GM_info.script.version) || '';
+
+  function loadUpdateState() {
+    const out = { checkedAt: 0, latest: '' };
+    try {
+      const raw = GM_getValue(UPDATE_KEY, null);
+      if (raw && typeof raw === 'object') {
+        if (Number.isFinite(raw.checkedAt)) out.checkedAt = raw.checkedAt;
+        if (typeof raw.latest === 'string' && VERSION_RE.test(raw.latest)) out.latest = raw.latest;
+      }
+    } catch (e) { /* none yet */ }
+    return out;
+  }
+
+  let updateState = loadUpdateState();
+
+  function saveUpdateState() {
+    try { GM_setValue(UPDATE_KEY, updateState); }
+    catch (e) { console.warn('[delve] could not save update check', e); }
+  }
+
+  function isNewerVersion(a, b) {
+    const x = a.split('.').map(Number), y = b.split('.').map(Number);
+    for (let i = 0; i < 3; i++) {
+      const d = (x[i] || 0) - (y[i] || 0);
+      if (d) return d > 0;
+    }
+    return false;
+  }
+
+  function updateAvailable() {
+    return !!updateState.latest && VERSION_RE.test(installedVersion) && isNewerVersion(updateState.latest, installedVersion);
+  }
+
+  function syncUpdate() {
+    if (updateAvailable()) root.setAttribute('data-delve-update', '');
+    else root.removeAttribute('data-delve-update');
+    syncDrawer();
+  }
+
+  function fetchPublishedVersion() {
+    return new Promise((resolve, reject) => GM_xmlhttpRequest({
+      method: 'GET', url: SCRIPT_URL,
+      onload: r => {
+        const m = r.status < 300 && /^\/\/ @version\s+(\S+)/m.exec(r.responseText);
+        if (m && VERSION_RE.test(m[1])) resolve(m[1]); else reject(new Error('no @version in response (HTTP ' + r.status + ')'));
+      },
+      onerror: reject,
+    }));
+  }
+
+  function checkForUpdate(force) {
+    updateState = loadUpdateState();   // another tab may have checked already
+    if (force !== true && Date.now() - updateState.checkedAt < UPDATE_EVERY_MS - 60 * 1000) { syncUpdate(); return; }
+    updateState.checkedAt = Date.now();   // a failed check also waits an hour
+    saveUpdateState();
+    fetchPublishedVersion()
+      .then(v => { updateState.latest = v; saveUpdateState(); })
+      .catch(e => console.warn('[delve] could not read the published version; update check unavailable', e))
+      .then(syncUpdate);
   }
 
   // ---------------------------------------------------------------------------
@@ -1980,4 +2087,8 @@ html[data-delve-pan] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   // the stage animates, and a view measured mid-animation would stay tiny).
   setInterval(() => { ensureWide(); updatePan(); }, 1000);
   ensureButtons();
+  if (typeof GM_xmlhttpRequest === 'function' && VERSION_RE.test(installedVersion)) {
+    checkForUpdate();
+    setInterval(checkForUpdate, UPDATE_EVERY_MS);
+  } else console.warn('[delve] GM_xmlhttpRequest or script version not available; update check unavailable');
 })();

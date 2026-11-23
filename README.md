@@ -19,7 +19,7 @@ It uses the site's own fonts, colors and buttons, so it looks like part of the s
 
 Installing from that link also turns on automatic updates: Tampermonkey checks for new versions on its own (daily by default). If you pasted the script in by hand instead, it won't update itself.
 
-The script only runs on `spelunkr.tv`. It makes one outside request, to `data.spelunkr.tv`, the site's own data host, to look up program descriptions.
+The script only runs on `spelunkr.tv`. It makes two outside requests: to `data.spelunkr.tv`, the site's own data host, to look up program descriptions, and to `raw.githubusercontent.com`, about once an hour, to read the published version number.
 
 ## Opening the menu
 
@@ -103,6 +103,10 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 - Whether you left the video muted is remembered too. If you left it unmuted, the first click or key press on the page unmutes it (browsers don't allow sound before that).
 - A mute button is added to the guide's controls when the site hasn't drawn its own.
 
+### Updates
+
+About once an hour Delve reads the version number of the published script on GitHub. When a newer one exists, the DELVE button pulses with a gold glow. The bottom of the menu shows the installed version and a button. When an update is available it reads **Update Available** (gold) and opens the script so Tampermonkey can install it; otherwise it reads **Check for Updates** and checks GitHub right away.
+
 ### Turning features on
 
 The drawer has an On/Off switch for each of these. They are all **off by default**, so turn on the ones you want:
@@ -114,7 +118,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, and the feature switches. Nothing is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
