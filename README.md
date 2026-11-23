@@ -6,7 +6,9 @@ It uses the site's own fonts, colors and buttons, so it looks like part of the s
 
 ![Delve's Wide view of the Spelunkr guide](images/guide-wide.png)
 
-> **Status:** Delve is being rewritten from scratch, and `delve.user.js` is the rewrite. Features from the older script are being brought over one at a time.
+> **Written mainly by Claude.** This project is mostly written by Claude, an AI model made by Anthropic. The author decides what it does and how it behaves.
+
+> **Status:** Delve is a rewrite of a personal userscript, made public because certain features are requested so often in the official Spelunkr Discord. Features from the original script are being brought over one at a time.
 
 ## Install
 
