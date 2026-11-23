@@ -9,8 +9,10 @@ It uses the site's own fonts, colors and buttons, so it looks like part of the s
 ## Install
 
 1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
-2. Open `delve.user.js` in Tampermonkey (create a new script and paste it in, or drag the file onto its dashboard).
+2. Click **[Install Delve](https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js)**. Tampermonkey opens an install page; click **Install**.
 3. Open [spelunkr.tv](https://spelunkr.tv/). A **DELVE** button now appears in the top bar.
+
+Installing from that link also turns on automatic updates: Tampermonkey checks for new versions on its own (daily by default). If you pasted the script in by hand instead, it won't update itself.
 
 The script only runs on `spelunkr.tv`. It makes one outside request, to `data.spelunkr.tv`, the site's own data host, to look up program descriptions.
 
