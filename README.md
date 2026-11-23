@@ -122,7 +122,26 @@ Everything is saved by Tampermonkey, in your browser, and kept between visits: v
 
 ## Planned
 
-Ideas under consideration: themes, hotkeys, a sleep timer, picture-in-picture, volume boost, CRT display options, and a local "tape stack" of bookmarked programs.
+Ideas under consideration:
+
+- Volume boost and normalization
+- CRT display options (scanlines, bezels, stretch, crop, zoom)
+- More themes
+- Mono-to-stereo and force-mono audio
+- Hide comments separately from reactions
+- A local "tape stack" for bookmarking programs, with personal notes
+- Hotkeys
+- Picture tweaks (contrast, brightness, saturation, dim, lights-out)
+- Channel flipper, "Spelunk my favorites" and auto-surf
+- Channel watermark toggle or opacity
+- A test pattern screen when a stream fails
+- Start times, past blocks and "late night" labels in the guide
+- Theater mode
+- 24-hour clock toggle
+- Tooltips for tags like [rewind]
+- An always-visible volume slider
+- A close button or minimal chrome on desktop
+- An ambient screensaver mode
 
 ## License
 
