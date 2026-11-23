@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.30.12
+// @version      0.30.13
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -163,7 +163,7 @@ ${L} .app--guide ::-webkit-scrollbar-track, ${L} .app--watch ::-webkit-scrollbar
 html[data-delve-layout="wide"] .app--guide { gap: 8px; }
 /* .app--guide is needed for specificity: the theme's "html.theme-8s .stage" padding and ".tv-grid" margin load later
    with the same specificity. */
-html[data-delve-layout="wide"] .app--guide .stage--guide { flex: 0 0 auto; max-height: calc(var(--delve-h) * .44); min-height: 0; overflow: hidden; padding: 0; margin: 0 8px; }
+html[data-delve-layout="wide"] .app--guide .stage--guide { flex: 0 0 auto; max-height: max(calc(var(--delve-h) * .44), 390px); min-height: 0; overflow: hidden; padding: 0; margin: 0 8px; }
 html[data-delve-layout="wide"] .stage--guide .stage-video-col { flex: 0 0 min(600px, 42%); min-height: 0; overflow: hidden; }
 html[data-delve-layout="wide"] .app--guide .tv-grid { flex: 1 1 0; margin: 8px 16px; }
 /* Same 8px frames as Split; the guide already draws its frame outward. */
@@ -283,6 +283,11 @@ html[data-delve-layout="split"] .app--guide .stage--guide .stage-info-col { flex
 .header-nav-delve { cursor: pointer; }
 /* The site orders header items with flex "order" (clock last), so give the button the highest. */
 html .prevue-header-bar > .header-nav-item.header-nav-delve { order: 99; margin-left: var(--space-2, 8px); }
+/* Phone: DELVE sits by the menu button; tighten the header so the clock stays on screen (B2). */
+@media (max-width: 480px) {
+  html .prevue-header-bar:has(.header-nav-delve) { gap: 3px !important; }
+  html .prevue-header-bar:has(.header-nav-delve) .header-nav-delve, html .prevue-header-bar:has(.header-nav-delve) .header-signin { padding-left: 4px !important; padding-right: 4px !important; min-width: 0 !important; }
+}
 `;
 
   const PANEL_CSS = `
@@ -1016,6 +1021,14 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
 .delve-zoom-label { display: inline-block; width: 56px; text-align: center; font-weight: 700; letter-spacing: 1px; color: var(--8s-yellow, #ffd740); }
 .delve-bar button:disabled { opacity: .4; cursor: default; }
 .delve-bar [hidden] { display: none !important; }
+/* Phone: everything must fit in 355 px (B1). The sort box takes what is left; the "Window" caption goes. */
+@media (max-width: 480px) {
+  .delve-bar button { padding: 0 8px; letter-spacing: 0; }
+  .delve-bar .delve-select { min-width: 0; flex: 1 1 0; width: 0; }
+  .delve-bar .delve-zoom-name, .delve-bar .delve-fav-label { display: none; }
+  .delve-zoom { gap: 4px; }
+  .delve-zoom-label { width: 40px; }
+}
 html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .grid-time-header { top: 52px; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-time-header { order: -1; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-hide] { display: none !important; }
@@ -1038,12 +1051,14 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   let bar = null, favBtn = null, sortSel = null, wideNote = null, zoomOut = null, zoomIn = null, zoomLbl = null, nowBtn = null, zoomBoxEl = null;
   function buildBar() {
     const b = el('div', 'delve-bar');
-    favBtn = el('button', 'delve-favbtn popup-toggle-btn', '★ Favorites');
+    favBtn = el('button', 'delve-favbtn popup-toggle-btn');
+    favBtn.append('★', el('span', 'delve-fav-label', ' Favorites'));   // the label hides on phones (see BAR_CSS)
+    favBtn.title = 'Favorites only';
     favBtn.type = 'button';
     favBtn.addEventListener('click', () => { setSettings({ favOnly: !settings.favOnly }); ensureGuide(); });
     sortSel = el('select', 'delve-select bbtn bbtn-outline');
     sortSel.setAttribute('aria-label', 'Sort channels');
-    Object.keys(SORTS).forEach(k => { const o = el('option', null, 'Sort: ' + SORTS[k]); o.value = k; sortSel.append(o); });
+    Object.keys(SORTS).forEach(k => { const o = el('option', null, (window.matchMedia('(max-width: 480px)').matches ? '' : 'Sort: ') + SORTS[k]); o.value = k; sortSel.append(o); });
     sortSel.addEventListener('change', () => { setSettings({ sort: sortSel.value }); ensureGuide(); });
     wideNote = el('span', 'delve-bar-note');
     // Time window: [-] 3h [+]. The label has a fixed width so the bar never shifts.
