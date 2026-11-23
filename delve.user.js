@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.30.11
+// @version      0.30.12
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -59,11 +59,11 @@
     zoom: 3,             // hours shown across the guide (one of ZOOMS)
     volume: 0.5,         // remembered between page loads
     muted: true,         // remembered between page loads
-    // Feature switches in the drawer; all on by default
-    programInfo: true,   // click-for-info card and IMDb / Archive links
-    favoritesOn: true,   // stars and Favorites button
-    sortOn: true,        // Sort drop-down
-    extended: true,      // extended guide: wider view, zoom, Now button, Now line
+    // Feature switches in the drawer; all off by default
+    programInfo: false,   // click-for-info card and IMDb / Archive links
+    favoritesOn: false,   // stars and Favorites button
+    sortOn: false,        // Sort drop-down
+    extended: false,      // extended guide: wider view, zoom, Now button, Now line
   };
   const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['extended', 'Extended guide']];
   const ZOOMS = [0.5, 1, 3, 6, 12];

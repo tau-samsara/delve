@@ -102,7 +102,7 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 
 ### Turning features off
 
-The drawer has an On/Off switch for each of these, all on by default:
+The drawer has an On/Off switch for each of these, all off by default:
 
 - Program information
 - Favorites
