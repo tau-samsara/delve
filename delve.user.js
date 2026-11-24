@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.31.4
+// @version      0.32.0
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -69,8 +69,13 @@
     theater: false,       // THEATER button on the player
     clock24: false,       // times shown as 13:00 instead of 1:00 PM
     searchOn: false,      // SEARCH button and popup
+    pictureOn: false,     // brightness and contrast sliders for the video
+    brightness: 100,      // percent, PICTURE_RANGE
+    contrast: 100,        // percent, PICTURE_RANGE
   };
-  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock']];
+  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock'], ['pictureOn', 'Picture tweaks']];
+  const PICTURE_RANGE = { min: 50, max: 150, step: 5 };
+  const PICTURE_SLIDERS = [['brightness', 'Brightness'], ['contrast', 'Contrast']];
   const ZOOMS = [0.5, 1, 3, 6, 12];
   const zoomText = z => z < 1 ? Math.round(z * 60) + 'm' : z + 'h';
   const SORTS = { dial: 'Channel #', name: 'Name', viewers: 'Most watched', favorites: 'Favorites first' };
@@ -88,7 +93,12 @@
         if (ZOOMS.indexOf(parsed.zoom) !== -1) out.zoom = parsed.zoom;
         if (typeof parsed.volume === 'number' && parsed.volume >= 0 && parsed.volume <= 1) out.volume = parsed.volume;
         if (typeof parsed.muted === 'boolean') out.muted = parsed.muted;
-        FEATURES.forEach(f => { if (typeof parsed[f[0]] === 'boolean') out[f[0]] = parsed[f[0]]; });        if (Object.prototype.hasOwnProperty.call(SORTS, parsed.sort)) out.sort = parsed.sort;
+        FEATURES.forEach(f => { if (typeof parsed[f[0]] === 'boolean') out[f[0]] = parsed[f[0]]; });
+        PICTURE_SLIDERS.forEach(([key]) => {
+          const v = parsed[key];
+          if (Number.isFinite(v) && v >= PICTURE_RANGE.min && v <= PICTURE_RANGE.max) out[key] = v;
+        });
+        if (Object.prototype.hasOwnProperty.call(SORTS, parsed.sort)) out.sort = parsed.sort;
       }
     } catch (e) { /* use defaults */ }
     return out;
@@ -104,7 +114,16 @@
     settings = Object.assign({}, settings, patch);
     save(settings);
     applyLayout();
+    applyPicture();
     syncDrawer();
+  }
+
+  function applyPicture() {
+    if (!settings.pictureOn) { root.removeAttribute('data-delve-picture'); return; }
+    root.style.setProperty('--delve-brightness', settings.brightness + '%');
+    root.style.setProperty('--delve-contrast', settings.contrast + '%');
+    root.setAttribute('data-delve-picture', '');
+    syncPicturePanel();
   }
 
   // ---------------------------------------------------------------------------
@@ -369,7 +388,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + PICTURE_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -458,6 +477,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
         if (!settings.programInfo && progState) closePanel();
         ensureGuide();
         ensureTheater();
+        ensurePicture();
         ensureClock24();
       });
       row.append(label, b);
@@ -2218,6 +2238,69 @@ html[data-delve-theater] .app--watch .stage--watch :is(.stage-player-header, .st
 html[data-delve-theater-idle] .app--watch .stage--watch, html[data-delve-theater-idle] .app--watch .stage--watch * { cursor: none !important; }
 html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: none; }
 `;
+  const PICTURE_CSS = `
+html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) contrast(var(--delve-contrast)); }
+.delve-picture-panel { position: fixed; z-index: 9001; box-sizing: border-box; width: 240px; padding: 8px 12px 12px; background: var(--bg-panel, #0d1238); color: var(--text, #e8eaf0); border: var(--border-width, 3px) solid var(--border-bold, #4a5aaa); font-family: var(--font-mono, "Courier New", monospace); font-size: 12px; }
+.delve-picture-panel[hidden] { display: none; }
+.delve-slider { display: block; width: 100%; margin: 0; accent-color: var(--gold, #ffd740); }
+.delve-slider-label { display: flex; justify-content: space-between; margin-top: 8px; color: var(--cyan, #00ccdd); letter-spacing: .06em; text-transform: uppercase; }
+`;
+  let picturePanel = null;
+  function syncPicturePanel() {
+    if (!picturePanel) return;
+    PICTURE_SLIDERS.forEach(([key]) => {
+      picturePanel.querySelector('input[data-picture="' + key + '"]').value = settings[key];
+      picturePanel.querySelector('[data-picture-value="' + key + '"]').textContent = settings[key] + '%';
+    });
+  }
+  function buildPicturePanel() {
+    picturePanel = document.createElement('div');
+    picturePanel.className = 'delve-picture-panel';
+    picturePanel.hidden = true;
+    PICTURE_SLIDERS.forEach(([key, name]) => {
+      const label = document.createElement('label');
+      label.className = 'delve-slider-label';
+      const value = document.createElement('span');
+      value.dataset.pictureValue = key;
+      const slider = document.createElement('input');
+      slider.type = 'range'; slider.className = 'delve-slider'; slider.dataset.picture = key;
+      slider.min = PICTURE_RANGE.min; slider.max = PICTURE_RANGE.max; slider.step = PICTURE_RANGE.step;
+      slider.addEventListener('input', () => setSettings({ [key]: Number(slider.value) }));
+      label.append(name, value);
+      picturePanel.append(label, slider);
+    });
+    root.append(picturePanel);
+    syncPicturePanel();
+  }
+  function togglePicturePanel(button) {
+    if (!picturePanel) buildPicturePanel();
+    picturePanel.hidden = !picturePanel.hidden;
+    if (picturePanel.hidden) return;
+    const r = button.getBoundingClientRect();
+    picturePanel.style.left = Math.max(0, Math.min(r.left, window.innerWidth - 240)) + 'px';
+    picturePanel.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+  }
+  document.addEventListener('mousedown', e => {
+    if (picturePanel && !picturePanel.hidden && !e.target.closest('.delve-picture-panel, #delve-picture')) picturePanel.hidden = true;
+  }, true);
+  function ensurePicture() {
+    const stage = document.querySelector('.app--watch .stage--watch');
+    const bar = stage && stage.querySelector('.stage-volume-bar');
+    if (!settings.pictureOn || !stage || !bar) {
+      if (settings.pictureOn && stage) warnMissing('.stage-volume-bar', 'Picture tweaks');
+      document.getElementById('delve-picture')?.remove();
+      if (picturePanel) picturePanel.hidden = true;
+      return;
+    }
+    let button = document.getElementById('delve-picture');
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'delve-picture'; button.type = 'button'; button.className = 'popup-toggle-btn'; button.textContent = 'PICTURE';
+      button.title = 'Brightness and contrast';
+      button.addEventListener('click', () => togglePicturePanel(button));
+    }
+    if (button.parentElement !== bar) bar.append(button);
+  }
   const THEATER_IDLE_MS = 3000;
   let theaterIdleTimer = 0;
   const inTheater = () => root.hasAttribute('data-delve-theater');
@@ -2392,12 +2475,14 @@ html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: 
       ensureNowLinks();
       ensureMute();
       ensureTheater();
+      ensurePicture();
       ensureClock24();
       ensureGuide();
     });
   });
 
   applyLayout();
+  applyPicture();
   if (document.head) applyStyle();
   else new MutationObserver((_, obs) => { if (document.head) { obs.disconnect(); applyStyle(); } }).observe(root, { childList: true });
   observer.observe(root, { childList: true, subtree: true });
