@@ -1,6 +1,6 @@
 # Delve
 
-Quality-of-life tools for [Spelunkr](https://spelunkr.tv/). Delve is a userscript that adds a few things the site doesn't have yet: more ways to lay out the guide, program info on click, favorites, sorting, a scrollable multi-day guide, and a remembered volume.
+Quality-of-life tools for [Spelunkr](https://spelunkr.tv/). Delve is a userscript that adds a few things the site doesn't have yet: more ways to lay out the guide, program info on click, favorites, sorting, a scrollable multi-day guide, a remembered volume, and audio tweaks (volume boost, leveling, night mode, mono and sync).
 
 It uses the site's own fonts, colors and buttons, so it looks like part of the site.
 
@@ -109,6 +109,35 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 - Whether you left the video muted is remembered too. If you left it unmuted, the first click or key press on the page unmutes it (browsers don't allow sound before that).
 - A mute button is added to the guide's controls when the site hasn't drawn its own.
 
+### Audio tweaks
+
+Switch on **Audio tweaks** in the drawer. An **AUDIO** button appears just left of the mute button in watch and channel mode. It opens a panel, from top to bottom:
+
+| Control | What it does |
+|---|---|
+| **Volume boost** | A slider from 100% to 300%, for channels that play too quietly. |
+| **Leveling** and **Target loudness** | Evens out the volume: quiet channels are lifted and loud ones trimmed toward the target (-30 to -16 LUFS, -23 by default), with a limiter to prevent clipping. The sound fades in when you change channel. |
+| **Night mode** | Compresses the sound: loud moments are pulled down toward the quiet ones, so you can keep the volume low without losing the dialogue. |
+| **Mono** | A row of five choices: **Off**, **Auto**, **Left**, **Mix**, **Right**. Left or Right plays that channel in both ears and Mix plays both mixed (at half level), for files with sound in one ear only. |
+| **Audio sync** | -1000 to +1000 ms. Minus plays the sound earlier, plus later, for sources whose sound is out of step with the picture. Moving it reloads the buffer, so the video stalls for a second. |
+
+**Auto** (in the Mono row) listens for about ten seconds of sound and then picks for you:
+
+- a dead side (30 dB or more quieter): plays the other side in both ears;
+- sides that differ by 1.5 dB or more: Mix;
+- evenly balanced sound: nothing changes and Auto switches itself off.
+
+It decides once. Select Auto again to repeat it, for example on another channel.
+
+All of these are remembered, and they apply to every channel: Delve does not reset Audio sync or Mono when you change channel, so set them back to 0 ms and Off if a channel doesn't need them. Leveling starts fresh on each channel.
+
+**How it works.** The site's video comes straight from archive.org, and a browser won't let a script process the sound of a video from another website. So, while Audio tweaks is on, Delve plays the stream itself: it fetches the video from archive.org in pieces, with audio and video fetched separately, and feeds it to the player. Seeking works as usual. Tampermonkey may ask you once to allow connections to `archive.org`; allow it.
+
+- Channels whose files store the index at the end (very large files) can take a little longer to start.
+- A failed request is retried twice. If a stream still can't be played this way, the site plays it as before, and the audio tweaks do nothing for that stream.
+- Once a stream has been swapped, switching Audio tweaks off keeps the swap until you reload the page, with the boost back at 100%.
+- If a stream can't be swapped *after* another channel has already been, the browser plays it silent until you reload the page.
+
 ### Updates
 
 About once an hour Delve reads the version number of the published script on GitHub. When a newer one exists, the DELVE button pulses with a gold glow. The bottom of the menu shows the installed version and a button. When an update is available it reads **Update Available** (gold) and opens the script so Tampermonkey can install it; otherwise it reads **Check for Updates** and checks GitHub right away.
@@ -124,18 +153,20 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - Extended guide (the wider timeline, Window zoom, Now button and Now line)
 - Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window with no header, player bars, guide or footer. **EXIT THEATER** in the top right corner goes back, and so does changing page. After 3 seconds without mouse movement the exit button fades and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
 - 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)
-- Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens a panel, from top to bottom: a Volume boost slider from 100% to 300%; a Leveling switch with a Target loudness slider (-30 to -16 LUFS) that evens out the volume: quiet channels are lifted and loud ones trimmed toward the target, with a limiter to prevent clipping; a Night mode switch that compresses the sound, so loud moments are pulled down toward the quiet ones and you can keep the volume low without losing the dialogue; a Mono row (Off, Auto, Left, Mix, Right): Left or Right plays that channel in both ears and Mix plays both mixed (at half level), for files with sound in one ear only. Auto listens for about ten seconds of sound and then picks for you: a dead side plays the other side, sides that differ by 1.5 dB or more get Mix, evenly balanced sound is left as it is. It decides once; select Auto again to repeat it; and an Audio sync slider (-1000 to +1000 ms: minus plays the sound earlier, plus later; for sources whose sound is out of step with the picture; moving it reloads the buffer, so the video stalls for a second). All of these and their settings are remembered. To make it possible Delve plays the stream itself instead of the site: it fetches the video from archive.org and feeds it to the player. Seeking works as usual. Audio and video are fetched separately, so channels whose files store them far apart still start in seconds. Files with the index at the end can take a little longer to start. A failed request is retried twice. If a stream still can't be played that way, the site plays it as before and the audio tweaks do nothing for it. Once a stream has been swapped, switching the feature off keeps the swap until you reload the page, with the boost back at 100%)
+- Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens the audio panel; see [Audio tweaks](#audio-tweaks) above)
 - Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a small panel with Brightness and Contrast sliders, 50% to 150%; the video changes as you drag, in every view. Click elsewhere to close. The settings are remembered)
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, and the feature switches. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
 - **The DELVE button isn't there:** check that Tampermonkey is enabled for `spelunkr.tv` and that only one Delve script is installed.
 - **Split looks like Wide:** your window is under 1400 px wide.
 - **Descriptions or links are missing:** not every program has an IMDb or Archive entry, and descriptions come from `data.spelunkr.tv`. Make sure Tampermonkey allows that connection.
+- **Audio tweaks: a channel has no sound or the AUDIO button does nothing:** that stream couldn't be played through Delve (see the Delve messages in the browser console, which start with `[delve]`). Reload the page; if the channel keeps failing, switch Audio tweaks off for it.
+- **Audio tweaks: Tampermonkey asks about archive.org:** that is the stream fetch described under [Audio tweaks](#audio-tweaks). Allow it, or the feature can't work.
 - **Something looks wrong after a site update:** Delve depends on the site's page structure, so site changes can break it. Reload first, then report the problem.
 
 ## Planned
@@ -144,7 +175,6 @@ Ideas under consideration:
 
 - CRT display options (scanlines, bezels, stretch, crop, zoom)
 - More themes
-- Mono-to-stereo and force-mono audio
 - Hide comments separately from reactions
 - A local "tape stack" for bookmarking programs, with personal notes
 - Hotkeys
