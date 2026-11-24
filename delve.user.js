@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.32.3
+// @version      0.32.4
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1373,6 +1373,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
 /* Same box as the site's popups (cc-panel). */
 html.theme-8s .delve-search { background: var(--8s-box); border: 0; box-shadow: var(--8s-ring-thin), 0 0 0 1px #141414; }
 .delve-search-input { box-sizing: border-box; width: 100%; margin-bottom: var(--space-2, 8px); padding: 6px 10px; color: inherit; background: var(--bg-deep, #060b1e); border: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; line-height: 1.8; }
+.delve-search-input::placeholder { overflow: visible; }   /* the placeholder clips the font's tall glyphs otherwise */
 .delve-search-input:focus-visible, .delve-search-hit:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
 .delve-search .delve-search-count { margin-bottom: var(--space-2, 8px); text-align: left; text-transform: uppercase; }
 .delve-search-body { display: flex; gap: var(--space-4, 16px); flex: 1 1 0; min-height: 0; }
