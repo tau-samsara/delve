@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.2
+// @version      0.34.3
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -72,8 +72,16 @@
     clock24: false,       // times shown as 13:00 instead of 1:00 PM
     searchOn: false,      // SEARCH button and popup
     pictureOn: false,     // brightness and contrast sliders for the video
-    brightness: 100,      // percent, PICTURE_RANGE
-    contrast: 100,        // percent, PICTURE_RANGE
+    brightness: 100,      // percent, PICTURE_SLIDERS
+    contrast: 100,        // percent, PICTURE_SLIDERS
+    saturation: 100,      // percent, PICTURE_SLIDERS
+    dim: 0,               // percent toward black, PICTURE_SLIDERS
+    pictureZoom: 100,     // percent, PICTURE_SLIDERS
+    alignX: 0,            // percent of the width the picture is moved right (overscan), PICTURE_SLIDERS
+    alignY: 0,            // percent of the height the picture is moved down, PICTURE_SLIDERS
+    pictureCrop: 'off',   // PICTURE_CROPS
+    pictureCropFit: 'fill',   // PICTURE_CROP_FITS: the picture fills the crop box or fits inside it
+    lightsOut: false,     // everything but the player goes black
     audioOn: false,       // AUDIO button: volume boost above 100%
     boost: 100,           // percent, BOOST_RANGE
     mono: false,          // play one channel, or both mixed, in both ears
@@ -100,8 +108,17 @@
   const SYNC_RANGE = { min: -1000, max: 1000, step: 10 };   // ms
   const LEVEL_RANGE = { min: -30, max: -16, step: 1 };
   const MONO_SOURCES = [['left', 'Left'], ['mix', 'Mix'], ['right', 'Right']];
-  const PICTURE_RANGE = { min: 50, max: 150, step: 5 };
-  const PICTURE_SLIDERS = [['brightness', 'Brightness'], ['contrast', 'Contrast']];
+  const PICTURE_SLIDERS = [
+    ['brightness', 'Brightness', { min: 50, max: 150, step: 5 }],
+    ['contrast', 'Contrast', { min: 50, max: 150, step: 5 }],
+    ['saturation', 'Saturation', { min: 0, max: 200, step: 5 }],
+    ['dim', 'Dim', { min: 0, max: 90, step: 5 }],
+    ['pictureZoom', 'Zoom', { min: 100, max: 150, step: 1 }],
+    ['alignX', 'Left / right', { min: -25, max: 25, step: 1 }],
+    ['alignY', 'Up / down', { min: -25, max: 25, step: 1 }],
+  ];
+  const PICTURE_CROP_FITS = [['fill', 'Fill'], ['fit', 'Fit']];
+  const PICTURE_CROPS = [['off', 'Off', 0], ['4:3', '4:3', 4 / 3], ['16:9', '16:9', 16 / 9], ['21:9', '21:9', 21 / 9]];
   const ZOOMS = [0.5, 1, 3, 6, 12];
   const zoomText = z => z < 1 ? Math.round(z * 60) + 'm' : z + 'h';
   const SORTS = { dial: 'Channel #', name: 'Name', viewers: 'Most watched', favorites: 'Favorites first' };
@@ -120,10 +137,13 @@
         if (typeof parsed.volume === 'number' && parsed.volume >= 0 && parsed.volume <= 1) out.volume = parsed.volume;
         if (typeof parsed.muted === 'boolean') out.muted = parsed.muted;
         FEATURES.forEach(f => { if (typeof parsed[f[0]] === 'boolean') out[f[0]] = parsed[f[0]]; });
-        PICTURE_SLIDERS.forEach(([key]) => {
+        PICTURE_SLIDERS.forEach(([key, , range]) => {
           const v = parsed[key];
-          if (Number.isFinite(v) && v >= PICTURE_RANGE.min && v <= PICTURE_RANGE.max) out[key] = v;
+          if (Number.isFinite(v) && v >= range.min && v <= range.max) out[key] = v;
         });
+        if (PICTURE_CROPS.some(([key]) => key === parsed.pictureCrop)) out.pictureCrop = parsed.pictureCrop;
+        if (PICTURE_CROP_FITS.some(([key]) => key === parsed.pictureCropFit)) out.pictureCropFit = parsed.pictureCropFit;
+        if (typeof parsed.lightsOut === 'boolean') out.lightsOut = parsed.lightsOut;
         if (Number.isFinite(parsed.boost) && parsed.boost >= BOOST_RANGE.min && parsed.boost <= BOOST_RANGE.max) out.boost = parsed.boost;
         if (Number.isInteger(parsed.syncMs) && parsed.syncMs >= SYNC_RANGE.min && parsed.syncMs <= SYNC_RANGE.max) out.syncMs = parsed.syncMs;
         if (typeof parsed.night === 'boolean') out.night = parsed.night;
@@ -164,11 +184,33 @@
   }
 
   function applyPicture() {
-    if (!settings.pictureOn) { root.removeAttribute('data-delve-picture'); return; }
-    root.style.setProperty('--delve-brightness', settings.brightness + '%');
-    root.style.setProperty('--delve-contrast', settings.contrast + '%');
+    if (!settings.pictureOn) { root.removeAttribute('data-delve-picture'); root.removeAttribute('data-delve-lights-out'); return; }
+    const { brightness, contrast, saturation, dim, pictureZoom, alignX, alignY } = settings;
+    root.style.setProperty('--delve-picture-filter', `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) brightness(${100 - dim}%)`);
+    root.style.setProperty('--delve-picture-zoom', pictureZoom / 100);
+    root.style.setProperty('--delve-picture-align', `${alignX}% ${alignY}%`);
     root.setAttribute('data-delve-picture', '');
+    root.toggleAttribute('data-delve-lights-out', settings.lightsOut);
+    updatePictureCrop();
     syncPicturePanel();
+  }
+  // The crop box is the largest rectangle of the chosen shape that fits the video element, centered. The picture is scaled
+  // to fill it (the overflow is clipped) or to fit inside it. The clip is in the element's own coordinates, before the scale.
+  function updatePictureCrop() {
+    const video = document.querySelector('video');
+    const aspect = PICTURE_CROPS.find(([key]) => key === settings.pictureCrop)[2];
+    let cropScale = 1, clip = 'none';
+    if (aspect && video && video.videoWidth && video.clientWidth && video.clientHeight) {
+      const { clientWidth: frameWidth, clientHeight: frameHeight } = video;
+      const pictureScale = Math.min(frameWidth / video.videoWidth, frameHeight / video.videoHeight);
+      const pictureWidth = video.videoWidth * pictureScale, pictureHeight = video.videoHeight * pictureScale;
+      const boxWidth = Math.min(frameWidth, frameHeight * aspect), boxHeight = boxWidth / aspect;
+      const [widthRatio, heightRatio] = [boxWidth / pictureWidth, boxHeight / pictureHeight];
+      cropScale = settings.pictureCropFit === 'fit' ? Math.min(widthRatio, heightRatio) : Math.max(widthRatio, heightRatio);
+      clip = `inset(${(frameHeight - boxHeight / cropScale) / 2}px ${(frameWidth - boxWidth / cropScale) / 2}px)`;
+    }
+    root.style.setProperty('--delve-picture-crop-scale', cropScale);
+    root.style.setProperty('--delve-picture-crop-clip', clip);
   }
 
   // ---------------------------------------------------------------------------
@@ -2288,39 +2330,77 @@ html[data-delve-theater-idle] .app--watch .stage--watch, html[data-delve-theater
 html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: none; }
 `;
   const PICTURE_CSS = `
-html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) contrast(var(--delve-contrast)); }
+html[data-delve-picture] video { filter: var(--delve-picture-filter); translate: var(--delve-picture-align); scale: calc(var(--delve-picture-zoom) * var(--delve-picture-crop-scale, 1)); clip-path: var(--delve-picture-crop-clip, none); }
+html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow: hidden; }
+html[data-delve-lights-out] .app--watch .stage--watch .stage-video-wrap { position: relative; z-index: 9000; box-shadow: 0 0 0 200vmax #000; }
+html[data-delve-lights-out] .app--watch .stage--watch .stage-volume-bar, html[data-delve-lights-out] .delve-picture-ctl { position: relative; z-index: 9001; }
 .delve-picture-panel[hidden] { display: none; }
 /* Panel, heading and button come from the site's CRT/ZZZ popups (cc-panel); only the slider sizing is ours. */
-.delve-picture-ctl .delve-picture-panel { width: 200px; left: auto; right: 0; transform: none; }
+.delve-picture-ctl .delve-picture-panel { width: 240px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
+@media (max-width: 480px) { :root .delve-picture-ctl .delve-picture-panel { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); max-height: calc(100vh - 40px); overflow-y: auto; } }
 .delve-picture-panel .cc-panel-head { display: flex; justify-content: space-between; text-align: left; }
+.delve-picture-panel .delve-seg { gap: 4px; margin-bottom: 8px; }
+:root .delve-picture-panel .delve-seg button { padding-left: 2px; padding-right: 2px; letter-spacing: 0; }
 :root .delve-picture-panel .delve-slider.player-volume-slider { display: block; flex: none; width: 100%; max-width: none; margin: 0 0 4px; box-sizing: border-box; }
 `;
   let picturePanel = null;
   function syncPicturePanel() {
     if (!picturePanel) return;
-    PICTURE_SLIDERS.forEach(([key]) => {
+    PICTURE_SLIDERS.forEach(([key, , range]) => {
       const slider = picturePanel.querySelector('input[data-picture="' + key + '"]');
       slider.value = settings[key];
-      slider.style.setProperty('--volume-pct', (settings[key] - PICTURE_RANGE.min) / (PICTURE_RANGE.max - PICTURE_RANGE.min) * 100 + '%');
-      picturePanel.querySelector('[data-picture-value="' + key + '"]').textContent = settings[key] + '%';
+      slider.style.setProperty('--volume-pct', (settings[key] - range.min) / (range.max - range.min) * 100 + '%');
+      const sign = range.min < 0 && settings[key] > 0 ? '+' : '';
+      picturePanel.querySelector('[data-picture-value="' + key + '"]').textContent = sign + settings[key] + '%';
     });
+    picturePanel.querySelectorAll('[data-picture-choice]').forEach(button => {
+      const on = settings[button.dataset.pictureChoice] === button.dataset.pictureKey;
+      button.setAttribute('aria-pressed', String(on));
+      button.classList.toggle('popup-toggle-btn--on', on);
+    });
+    const lightsOut = picturePanel.querySelector('[data-picture-lights-out]');
+    lightsOut.textContent = settings.lightsOut ? 'On' : 'Off';
+    lightsOut.setAttribute('aria-pressed', String(settings.lightsOut));
+    lightsOut.classList.toggle('popup-toggle-btn--on', settings.lightsOut);
   }
   function buildPicturePanel() {
     picturePanel = document.createElement('div');
     picturePanel.className = 'cc-panel delve-picture-panel';
     picturePanel.hidden = true;
-    PICTURE_SLIDERS.forEach(([key, name]) => {
+    PICTURE_SLIDERS.forEach(([key, name, range]) => {
       const label = document.createElement('label');
       label.className = 'cc-panel-head';
       const value = document.createElement('span');
       value.dataset.pictureValue = key;
       const slider = document.createElement('input');
       slider.type = 'range'; slider.className = 'player-volume-slider delve-slider'; slider.dataset.picture = key;
-      slider.min = PICTURE_RANGE.min; slider.max = PICTURE_RANGE.max; slider.step = PICTURE_RANGE.step;
+      slider.min = range.min; slider.max = range.max; slider.step = range.step;
       slider.addEventListener('input', () => setSettings({ [key]: Number(slider.value) }));
       label.append(name, value);
       picturePanel.append(label, slider);
     });
+    [['pictureCrop', 'Crop', PICTURE_CROPS], ['pictureCropFit', 'Crop fit', PICTURE_CROP_FITS]].forEach(([setting, name, choices]) => {
+      const head = document.createElement('div');
+      head.className = 'cc-panel-head';
+      head.append(name);
+      const row = document.createElement('div');
+      row.className = 'delve-seg';
+      choices.forEach(([key, text]) => {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'popup-toggle-btn'; button.textContent = text;
+        button.dataset.pictureChoice = setting; button.dataset.pictureKey = key;
+        button.addEventListener('click', () => setSettings({ [setting]: key }));
+        row.append(button);
+      });
+      picturePanel.append(head, row);
+    });
+    const lightsHead = document.createElement('div');
+    lightsHead.className = 'cc-panel-head';
+    const lightsOut = document.createElement('button');
+    lightsOut.type = 'button'; lightsOut.className = 'popup-toggle-btn'; lightsOut.dataset.pictureLightsOut = '';
+    lightsOut.addEventListener('click', () => setSettings({ lightsOut: !settings.lightsOut }));
+    lightsHead.append('Lights-out', lightsOut);
+    picturePanel.append(lightsHead);
     syncPicturePanel();
   }
   function setPicturePanelOpen(open) {
@@ -2332,7 +2412,14 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
   document.addEventListener('mousedown', e => {
     if (picturePanel && !picturePanel.hidden && !e.target.closest('.delve-picture-ctl')) setPicturePanelOpen(false);
   }, true);
+  const pictureWatchedVideos = new WeakSet();
   function ensurePicture() {
+    const video = settings.pictureOn && document.querySelector('video');
+    if (video && !pictureWatchedVideos.has(video)) {
+      pictureWatchedVideos.add(video);
+      ['loadedmetadata', 'resize'].forEach(type => video.addEventListener(type, updatePictureCrop));
+      new ResizeObserver(updatePictureCrop).observe(video);
+    }
     const stage = document.querySelector('.app--watch .stage--watch');
     const bar = stage && stage.querySelector('.stage-volume-bar');
     if (!settings.pictureOn || !stage || !bar) {
@@ -2347,7 +2434,7 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
       ctl.className = 'subtitle-ctl delve-picture-ctl';
       const button = document.createElement('button');
       button.id = 'delve-picture'; button.type = 'button'; button.className = 'popup-toggle-btn'; button.textContent = 'PICTURE';
-      button.title = 'Brightness and contrast';
+      button.title = 'Brightness, contrast, saturation, dim, zoom, alignment, crop and lights-out';
       button.setAttribute('aria-expanded', 'false');
       if (!picturePanel) buildPicturePanel();
       button.addEventListener('click', () => setPicturePanelOpen(picturePanel.hidden));

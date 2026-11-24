@@ -154,13 +154,13 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window with no header, player bars, guide or footer. **EXIT THEATER** in the top right corner goes back, and so does changing page. After 3 seconds without mouse movement the exit button fades and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
 - 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)
 - Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens the audio panel; see [Audio tweaks](#audio-tweaks) above)
-- Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a small panel with Brightness and Contrast sliders, 50% to 150%; the video changes as you drag, in every view. Click elsewhere to close. The settings are remembered)
+- Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a panel with sliders for **Brightness** and **Contrast** (50% to 150%), **Saturation** (0% to 200%), **Dim** (0% to 90% toward black), **Zoom** (100% to 150%) and **Left / right** and **Up / down** alignment (up to 25% either way, like a TV's overscan: the picture moves, the far edge is cut off and black shows on the other side), plus **Crop** (Off, 4:3, 16:9 or 21:9: the largest box of that shape that fits the player, centered; **Crop fit** chooses whether the picture is scaled to **Fill** the box, cutting what overflows, or to **Fit** inside it, cutting nothing) and **Lights-out** (everything but the player and its key row goes black). The video changes as you drag, in every view. Click elsewhere to close. The settings are remembered. The Watermark does not follow Zoom, alignment or Crop)
 - Hide options (the site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**. Comments hides the comment markers on the scrub bar and the comment pop-ups on the video; Reactions hides the reaction strip on the scrub bar; Both hides all of them. The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row)
 - Watermark (a WATERMARK button in the player's key row opens a popup that puts the channel's logo over a corner of the picture itself, not over the black bars. **On/Off**, **Size** (4% to 20% of the picture height), **Opacity** (1% to 20%, in 1% steps), **Corner** and **Logo** (Original, or **B&W**: the logo without its background, drawn in white and grays). The watermark is Off until you turn it on in the popup. The settings are remembered)
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), the Hide choice, the watermark settings, and the feature switches. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
@@ -179,7 +179,6 @@ Ideas under consideration:
 - More themes
 - A local "tape stack" for bookmarking programs, with personal notes
 - Hotkeys
-- Picture tweaks beyond brightness and contrast (saturation, dim, lights-out)
 - Channel flipper, "Spelunk my favorites" and auto-surf
 - A test pattern screen when a stream fails
 - Start times, past blocks and "late night" labels in the guide
