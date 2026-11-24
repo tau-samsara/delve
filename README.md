@@ -116,6 +116,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - Sort
 - Extended guide (the wider timeline, Window zoom, Now button and Now line)
 - Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window with no header, player bars, guide or footer. **EXIT THEATER** in the top right corner goes back, and so does changing page. After 3 seconds without mouse movement the exit button fades and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
+- 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)
 
 ## Your settings
 
@@ -144,7 +145,6 @@ Ideas under consideration:
 - Channel watermark toggle or opacity
 - A test pattern screen when a stream fails
 - Start times, past blocks and "late night" labels in the guide
-- 24-hour clock toggle
 - Tooltips for tags like [rewind]
 - An always-visible volume slider
 - A close button or minimal chrome on desktop

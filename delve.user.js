@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.31.1
+// @version      0.31.2
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -67,8 +67,9 @@
     sortOn: false,        // Sort drop-down
     extended: false,      // extended guide: wider view, zoom, Now button, Now line
     theater: false,       // THEATER button on the player
+    clock24: false,       // times shown as 13:00 instead of 1:00 PM
   };
-  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['extended', 'Extended guide'], ['theater', 'Theater mode']];
+  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock']];
   const ZOOMS = [0.5, 1, 3, 6, 12];
   const zoomText = z => z < 1 ? Math.round(z * 60) + 'm' : z + 'h';
   const SORTS = { dial: 'Channel #', name: 'Name', viewers: 'Most watched', favorites: 'Favorites first' };
@@ -456,6 +457,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
         if (!settings.programInfo && progState) closePanel();
         ensureGuide();
         ensureTheater();
+        ensureClock24();
       });
       row.append(label, b);
       return row;
@@ -762,7 +764,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     const lines = String(tip || '').split('\n').map(l => l.trim()).filter(Boolean);
     const shows = [];
     for (const l of lines.slice(1)) {
-      const m = /^(\d{1,2}:\d{2}\s*[AP]M)\s+(.+)$/i.exec(l);
+      const m = /^(\d{1,2}:\d{2}(?:\s*[AP]M)?)\s+(.+)$/i.exec(l);
       if (m) shows.push({ time: m[1], title: m[2] });
     }
     return { head: lines[0] || '', shows };
@@ -781,7 +783,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     warnedMissing.add(message);
     console.warn('[delve] ' + message);
   }
-  const fmtTime = d => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const fmtTime = d => d.toLocaleTimeString([], settings.clock24 ? { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' } : { hour: 'numeric', minute: '2-digit' });
   const fmtDur = sec => {
     const m = Math.round(sec / 60);
     return m >= 60 ? Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm' : m + ' min';
@@ -2154,6 +2156,30 @@ html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: 
     lastMode = mode;
   }
 
+  // 24-hour clock: the site's 12-hour times are rewritten in place. The original is kept on the element so switching off restores it.
+  const TIME_12H = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AP]M)\b/gi;
+  const to24h = text => text.replace(TIME_12H, (_, h, min, sec, ampm) => String(h % 12 + (/p/i.test(ampm) ? 12 : 0)).padStart(2, '0') + ':' + min + (sec ? ':' + sec : ''));
+  const TIME_TEXT = '.prevue-header-clock, .grid-time-label, .guide-info-upcoming-time, .player-upcoming-time';
+  const TIME_TIP = '.grid-program[title]';
+  const timeOf = e => e.matches(TIME_TIP) ? e.title : e.textContent;
+  const setTimeOf = (e, value) => { if (e.matches(TIME_TIP)) e.title = value; else e.textContent = value; };
+  function ensureClock24() {
+    if (settings.clock24) {
+      document.querySelectorAll(TIME_TEXT + ', ' + TIME_TIP).forEach(e => {
+        if (e.matches(TIME_TEXT) && e.children.length) return;
+        const was = timeOf(e), shown = to24h(was);
+        if (shown === was) return;
+        e.dataset.delveWas = was; e.dataset.delveShown = shown;
+        setTimeOf(e, shown);
+      });
+      return;
+    }
+    document.querySelectorAll('[data-delve-shown]').forEach(e => {
+      if (timeOf(e) === e.dataset.delveShown) setTimeOf(e, e.dataset.delveWas);   // the site may have rewritten it since
+      delete e.dataset.delveWas; delete e.dataset.delveShown;
+    });
+  }
+
   let pending = false;
   const observer = new MutationObserver(() => {
     if (pending) return;
@@ -2164,6 +2190,7 @@ html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: 
       ensureNowLinks();
       ensureMute();
       ensureTheater();
+      ensureClock24();
       ensureGuide();
     });
   });
@@ -2183,7 +2210,7 @@ html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: 
   window.addEventListener('hashchange', checkRoute);
   // Every second: move the Now line and re-measure the wider view (the guide's width changes without a page change while
   // the stage animates, and a view measured mid-animation would stay tiny).
-  setInterval(() => { ensureWide(); updatePan(); }, 1000);
+  setInterval(() => { ensureWide(); updatePan(); ensureClock24(); }, 1000);
   ensureButtons();
   if (typeof GM_xmlhttpRequest === 'function' && VERSION_RE.test(installedVersion)) {
     checkForUpdate();
