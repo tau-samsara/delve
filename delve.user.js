@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.32.2
+// @version      0.32.3
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1369,10 +1369,12 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   const SEARCH_CSS = `
 .delve-search-scrim { position: fixed; inset: 0; z-index: 2147483002; display: flex; align-items: flex-start; justify-content: center; padding: 6vh var(--space-4, 16px) 0; box-sizing: border-box; background: rgba(0, 0, 0, .6); }
 .delve-search-scrim[hidden] { display: none; }
-.delve-search { display: flex; flex-direction: column; width: min(980px, 100%); height: min(84vh, 680px); box-sizing: border-box; padding: var(--space-4, 16px); background: var(--bg-panel, #0d1238); color: var(--text, #e8eaf0); border: var(--border-width, 3px) solid var(--border-bold, #4a5aaa); font-family: var(--font-mono, "Courier New", monospace); font-size: 14px; line-height: 1.4; }
-.delve-search-input { box-sizing: border-box; width: 100%; height: 36px; margin-bottom: var(--space-2, 8px); padding: 0 10px; color: inherit; background: var(--bg-deep, #060b1e); border: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; }
+.delve-search { display: flex; flex-direction: column; width: min(980px, 100%); height: min(84vh, 680px); box-sizing: border-box; padding: var(--space-4, 16px); background: var(--bg-deep, #060b1e); color: var(--text, #e8eaf0); border: 1px solid var(--border-color, rgb(38, 82, 178)); font-family: var(--font-mono, "Courier New", monospace); font-size: 14px; line-height: 1.4; }
+/* Same box as the site's popups (cc-panel). */
+html.theme-8s .delve-search { background: var(--8s-box); border: 0; box-shadow: var(--8s-ring-thin), 0 0 0 1px #141414; }
+.delve-search-input { box-sizing: border-box; width: 100%; margin-bottom: var(--space-2, 8px); padding: 6px 10px; color: inherit; background: var(--bg-deep, #060b1e); border: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; line-height: 1.8; }
 .delve-search-input:focus-visible, .delve-search-hit:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
-.delve-search-count { margin-bottom: var(--space-2, 8px); font-size: 12px; color: var(--cyan, #00ccdd); text-transform: uppercase; letter-spacing: .06em; }
+.delve-search .delve-search-count { margin-bottom: var(--space-2, 8px); text-align: left; text-transform: uppercase; }
 .delve-search-body { display: flex; gap: var(--space-4, 16px); flex: 1 1 0; min-height: 0; }
 .delve-search-list { flex: 0 0 45%; min-width: 0; overflow-y: auto; }
 .delve-search-info { flex: 1 1 0; min-width: 0; overflow-y: auto; padding-left: var(--space-4, 16px); border-left: 1px solid var(--border-color, rgb(38, 82, 178)); }
@@ -1414,7 +1416,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     searchInput.setAttribute('aria-label', 'Search channels and shows');
     searchInput.addEventListener('input', renderSearch);
     ['keydown', 'keyup', 'keypress'].forEach(type => searchInput.addEventListener(type, e => e.stopPropagation()));   // the site's hotkeys must not fire while typing
-    searchCount = el('div', 'delve-search-count');
+    searchCount = el('div', 'delve-search-count cc-panel-head');
     searchCount.setAttribute('aria-live', 'polite');
     searchList = el('div', 'delve-search-list');
     searchInfo = el('div', 'delve-search-info');
@@ -2240,11 +2242,11 @@ html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: 
 `;
   const PICTURE_CSS = `
 html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) contrast(var(--delve-contrast)); }
-.delve-picture-panel { position: fixed; z-index: 9001; box-sizing: border-box; width: 240px; padding: 8px 12px 12px; background: var(--bg-panel, #0d1238); color: var(--text, #e8eaf0); border: var(--border-width, 3px) solid var(--border-bold, #4a5aaa); font-family: var(--font-mono, "Courier New", monospace); font-size: 12px; }
 .delve-picture-panel[hidden] { display: none; }
-/* The sliders take the site's volume slider look (player-volume-slider); only the size is ours. */
-:root .delve-picture-panel .delve-slider.player-volume-slider { display: block; width: 100%; max-width: none; margin: 6px 0 4px; box-sizing: border-box; }
-.delve-slider-label { display: flex; justify-content: space-between; margin-top: 8px; color: var(--cyan, #00ccdd); letter-spacing: .06em; text-transform: uppercase; }
+/* Panel, heading and button come from the site's CRT/ZZZ popups (cc-panel); only the slider sizing is ours. */
+.delve-picture-ctl .delve-picture-panel { width: 200px; left: auto; right: 0; transform: none; }
+.delve-picture-panel .cc-panel-head { display: flex; justify-content: space-between; text-align: left; }
+:root .delve-picture-panel .delve-slider.player-volume-slider { display: block; flex: none; width: 100%; max-width: none; margin: 0 0 4px; box-sizing: border-box; }
 `;
   let picturePanel = null;
   function syncPicturePanel() {
@@ -2258,11 +2260,11 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
   }
   function buildPicturePanel() {
     picturePanel = document.createElement('div');
-    picturePanel.className = 'delve-picture-panel';
+    picturePanel.className = 'cc-panel delve-picture-panel';
     picturePanel.hidden = true;
     PICTURE_SLIDERS.forEach(([key, name]) => {
       const label = document.createElement('label');
-      label.className = 'delve-slider-label';
+      label.className = 'cc-panel-head';
       const value = document.createElement('span');
       value.dataset.pictureValue = key;
       const slider = document.createElement('input');
@@ -2272,37 +2274,39 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
       label.append(name, value);
       picturePanel.append(label, slider);
     });
-    root.append(picturePanel);
     syncPicturePanel();
   }
-  function togglePicturePanel(button) {
-    if (!picturePanel) buildPicturePanel();
-    picturePanel.hidden = !picturePanel.hidden;
-    if (picturePanel.hidden) return;
-    const r = button.getBoundingClientRect();
-    picturePanel.style.left = Math.max(0, Math.min(r.left, window.innerWidth - 240)) + 'px';
-    picturePanel.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+  function setPicturePanelOpen(open) {
+    if (!picturePanel) return;
+    picturePanel.hidden = !open;
+    picturePanel.parentElement.classList.toggle('subtitle-ctl--open', open);
+    picturePanel.parentElement.querySelector('#delve-picture').setAttribute('aria-expanded', open);
   }
   document.addEventListener('mousedown', e => {
-    if (picturePanel && !picturePanel.hidden && !e.target.closest('.delve-picture-panel, #delve-picture')) picturePanel.hidden = true;
+    if (picturePanel && !picturePanel.hidden && !e.target.closest('.delve-picture-ctl')) setPicturePanelOpen(false);
   }, true);
   function ensurePicture() {
     const stage = document.querySelector('.app--watch .stage--watch');
     const bar = stage && stage.querySelector('.stage-volume-bar');
     if (!settings.pictureOn || !stage || !bar) {
       if (settings.pictureOn && stage) warnMissing('.stage-volume-bar', 'Picture tweaks');
-      document.getElementById('delve-picture')?.remove();
-      if (picturePanel) picturePanel.hidden = true;
+      setPicturePanelOpen(false);
+      document.querySelector('.delve-picture-ctl')?.remove();
       return;
     }
-    let button = document.getElementById('delve-picture');
-    if (!button) {
-      button = document.createElement('button');
+    let ctl = document.querySelector('.delve-picture-ctl');
+    if (!ctl) {
+      ctl = document.createElement('span');
+      ctl.className = 'subtitle-ctl delve-picture-ctl';
+      const button = document.createElement('button');
       button.id = 'delve-picture'; button.type = 'button'; button.className = 'popup-toggle-btn'; button.textContent = 'PICTURE';
       button.title = 'Brightness and contrast';
-      button.addEventListener('click', () => togglePicturePanel(button));
+      button.setAttribute('aria-expanded', 'false');
+      if (!picturePanel) buildPicturePanel();
+      button.addEventListener('click', () => setPicturePanelOpen(picturePanel.hidden));
+      ctl.append(button, picturePanel);
     }
-    if (button.parentElement !== bar) bar.append(button);
+    if (ctl.parentElement !== bar) bar.append(ctl);
   }
   const THEATER_IDLE_MS = 3000;
   let theaterIdleTimer = 0;
