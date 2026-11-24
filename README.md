@@ -83,6 +83,12 @@ The **Sort** drop-down in the guide toolbar orders the channels by:
 
 ![Sorted with favorites first](images/guide-sort-favorites.png)
 
+### Search
+
+The **Search** button in the guide toolbar opens a popup with a text box. Type part of a channel name or number, or a show title. Results list the matching channels and the programs that are loaded: what the guide shows, or the whole timeline when the Extended guide is on. Channels hidden by the Favorites button are not searched.
+
+The results are on the left. Click one and its information appears on the right: title, year, season and episode, time, length, channel, description, and IMDb and Internet Archive links. A channel shows its name and description. On a phone the information sits below the results. Close the popup with ✕ or by clicking outside it.
+
 ### Extended guide
 
 Turns the guide into a long, sideways-scrolling timeline that shows programs that already aired as well as ones coming up. It looks like the site's guide, just longer.
@@ -114,6 +120,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - Program information
 - Favorites
 - Sort
+- Search (the SEARCH button and popup)
 - Extended guide (the wider timeline, Window zoom, Now button and Now line)
 - Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window with no header, player bars, guide or footer. **EXIT THEATER** in the top right corner goes back, and so does changing page. After 3 seconds without mouse movement the exit button fades and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
 - 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)

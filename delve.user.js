@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.31.2
+// @version      0.31.3
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -68,8 +68,9 @@
     extended: false,      // extended guide: wider view, zoom, Now button, Now line
     theater: false,       // THEATER button on the player
     clock24: false,       // times shown as 13:00 instead of 1:00 PM
+    searchOn: false,      // SEARCH button and popup
   };
-  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock']];
+  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock']];
   const ZOOMS = [0.5, 1, 3, 6, 12];
   const zoomText = z => z < 1 ? Math.round(z * 60) + 'm' : z + 'h';
   const SORTS = { dial: 'Channel #', name: 'Name', viewers: 'Most watched', favorites: 'Favorites first' };
@@ -368,7 +369,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -1212,7 +1213,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     ensureGuide();
   }
 
-  let bar = null, favBtn = null, sortSel = null, wideNote = null, zoomOut = null, zoomIn = null, zoomLbl = null, nowBtn = null, zoomBoxEl = null;
+  let bar = null, favBtn = null, sortSel = null, searchBtn = null, wideNote = null, zoomOut = null, zoomIn = null, zoomLbl = null, nowBtn = null, zoomBoxEl = null;
   function buildBar() {
     const b = el('div', 'delve-bar');
     favBtn = el('button', 'delve-favbtn popup-toggle-btn');
@@ -1224,6 +1225,9 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     sortSel.setAttribute('aria-label', 'Sort channels');
     Object.keys(SORTS).forEach(k => { const o = el('option', null, (window.matchMedia('(max-width: 480px)').matches ? '' : 'Sort: ') + SORTS[k]); o.value = k; sortSel.append(o); });
     sortSel.addEventListener('change', () => { setSettings({ sort: sortSel.value }); ensureGuide(); });
+    searchBtn = el('button', 'delve-searchbtn bbtn bbtn-outline', 'Search');
+    searchBtn.type = 'button';
+    searchBtn.addEventListener('click', openSearch);
     wideNote = el('span', 'delve-bar-note');
     // Time window: [-] 3h [+]. The label has a fixed width so the bar never shifts.
     const zoomBox = zoomBoxEl = el('span', 'delve-zoom');
@@ -1246,7 +1250,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     nowBtn = el('button', 'delve-nowbtn bbtn bbtn-outline', 'Now');
     nowBtn.type = 'button'; nowBtn.hidden = true;
     nowBtn.addEventListener('click', () => scrollWideToNow(true));
-    b.append(favBtn, sortSel, nowBtn, wideNote, zoomBox);
+    b.append(favBtn, sortSel, searchBtn, nowBtn, wideNote, zoomBox);
     return b;
   }
   // The sort in effect: Channel # when the Sort feature is off, or when "Favorites first" is chosen but Favorites is off.
@@ -1255,7 +1259,8 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   function ensureBar() {
     const grid = document.querySelector(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid');
     // With every tool switched off there is nothing to put on the bar, so there is no bar.
-    if (!grid || !(settings.favoritesOn || settings.sortOn || settings.extended)) {
+    if (!settings.searchOn) closeSearch();
+    if (!grid || !(settings.favoritesOn || settings.sortOn || settings.searchOn || settings.extended)) {
       if (bar && bar.parentNode) bar.remove();
       root.removeAttribute('data-delve-bar');
       return;
@@ -1265,6 +1270,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     root.setAttribute('data-delve-bar', '1');
     favBtn.hidden = !settings.favoritesOn;
     sortSel.hidden = !settings.sortOn;
+    searchBtn.hidden = !settings.searchOn;
     zoomBoxEl.hidden = !settings.extended;
     const favOpt = sortSel.querySelector('option[value="favorites"]');
     if (favOpt) { favOpt.disabled = !settings.favoritesOn; favOpt.hidden = !settings.favoritesOn; }
@@ -1334,6 +1340,187 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     }[sortKey];
     items.sort(cmp);
     style.textContent = items.map((it, n) => ':is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-channel="' + CSS.escape(it.id) + '"]{order:' + (n + 1) + '}').join('\n');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Search: a popup over the page. It searches the channels the guide shows and the programs already loaded (the site's own
+  // cells, or the whole wider view when that is on). The results are on the left; the chosen one's information is on the right.
+  // ---------------------------------------------------------------------------
+  const SEARCH_CSS = `
+.delve-search-scrim { position: fixed; inset: 0; z-index: 2147483002; display: flex; align-items: flex-start; justify-content: center; padding: 6vh var(--space-4, 16px) 0; box-sizing: border-box; background: rgba(0, 0, 0, .6); }
+.delve-search-scrim[hidden] { display: none; }
+.delve-search { display: flex; flex-direction: column; width: min(980px, 100%); height: min(84vh, 680px); box-sizing: border-box; padding: var(--space-4, 16px); background: var(--bg-panel, #0d1238); color: var(--text, #e8eaf0); border: var(--border-width, 3px) solid var(--border-bold, #4a5aaa); font-family: var(--font-mono, "Courier New", monospace); font-size: 14px; line-height: 1.4; }
+.delve-search-input { box-sizing: border-box; width: 100%; height: 36px; margin-bottom: var(--space-2, 8px); padding: 0 10px; color: inherit; background: var(--bg-deep, #060b1e); border: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; }
+.delve-search-input:focus-visible, .delve-search-hit:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
+.delve-search-count { margin-bottom: var(--space-2, 8px); font-size: 12px; color: var(--cyan, #00ccdd); text-transform: uppercase; letter-spacing: .06em; }
+.delve-search-body { display: flex; gap: var(--space-4, 16px); flex: 1 1 0; min-height: 0; }
+.delve-search-list { flex: 0 0 45%; min-width: 0; overflow-y: auto; }
+.delve-search-info { flex: 1 1 0; min-width: 0; overflow-y: auto; padding-left: var(--space-4, 16px); border-left: 1px solid var(--border-color, rgb(38, 82, 178)); }
+.delve-search-info .guide-info-now-title { white-space: normal; overflow: visible; }
+.delve-search-info .guide-info-now-title-row { flex-wrap: wrap; }
+.delve-search-info .guide-info-now-desc { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.delve-search-hit { display: block; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; color: inherit; background: transparent; border: 0; border-bottom: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; cursor: pointer; }
+.delve-search-hit:hover { background: rgba(255, 255, 255, .08); }
+.delve-search-hit.sel { outline: 2px solid var(--gold, #ffd740); outline-offset: -2px; }
+.delve-search-where { display: block; font-size: 12px; opacity: .75; }
+@media (max-width: 640px) {
+  .delve-search-body { flex-direction: column; }
+  .delve-search-list { flex: 1 1 0; }
+  .delve-search-info { padding: var(--space-2, 8px) 0 0; border-left: 0; border-top: 1px solid var(--border-color, rgb(38, 82, 178)); }
+}
+`;
+
+  const SEARCH_MAX_HITS = 200;
+  const SITE_ROWS = ':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid > .tv-grid-body > .grid-row';
+  let searchScrim = null, searchInput = null, searchList = null, searchCount = null, searchInfo = null, searchLastFocus = null, searchInfoToken = 0;
+
+  function buildSearch() {
+    searchScrim = el('div', 'delve-search-scrim');
+    searchScrim.hidden = true;
+    searchScrim.addEventListener('click', e => { if (e.target === searchScrim) closeSearch(); });
+    const box = el('div', 'delve-search');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Search');
+    const head = el('div', 'delve-head');
+    const close = el('button', 'delve-close bbtn bbtn-outline', '✕');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Close search');
+    close.addEventListener('click', closeSearch);
+    head.append(el('h2', 'delve-title', 'SEARCH'), close);
+    searchInput = el('input', 'delve-search-input');
+    searchInput.type = 'search';
+    searchInput.placeholder = 'Channel or show';
+    searchInput.setAttribute('aria-label', 'Search channels and shows');
+    searchInput.addEventListener('input', renderSearch);
+    ['keydown', 'keyup', 'keypress'].forEach(type => searchInput.addEventListener(type, e => e.stopPropagation()));   // the site's hotkeys must not fire while typing
+    searchCount = el('div', 'delve-search-count');
+    searchCount.setAttribute('aria-live', 'polite');
+    searchList = el('div', 'delve-search-list');
+    searchInfo = el('div', 'delve-search-info');
+    const body = el('div', 'delve-search-body');
+    body.append(searchList, searchInfo);
+    box.append(head, searchInput, searchCount, body);
+    searchScrim.append(box);
+    root.append(searchScrim);
+  }
+
+  function openSearch() {
+    if (!searchScrim) buildSearch();
+    searchLastFocus = document.activeElement;
+    searchScrim.hidden = false;
+    renderSearch();
+    searchInput.focus({ preventScroll: true });
+  }
+
+  function closeSearch() {
+    if (!searchScrim || searchScrim.hidden) return;
+    searchScrim.hidden = true;
+    searchInfoToken++;
+    if (searchLastFocus && searchLastFocus.focus) { try { searchLastFocus.focus({ preventScroll: true }); } catch (e) { /* ignore */ } }
+  }
+
+  function searchChannelRows() {
+    return Array.from(document.querySelectorAll(SITE_ROWS)).filter(row => !row.hasAttribute('data-delve-hide')).map(row => {
+      const nameEl = row.querySelector('.grid-channel-name-text'), numEl = row.querySelector('.grid-channel-num');
+      return { row, id: row.dataset.channel, name: nameEl ? nameEl.textContent.trim() : row.dataset.channel, number: numEl ? numEl.textContent.trim() : '' };
+    });
+  }
+
+  function findHits(query) {
+    const channels = searchChannelRows();
+    const hits = [];
+    channels.forEach(ch => { if ((ch.number + ' ' + ch.name).toLowerCase().includes(query)) hits.push({ kind: 'channel', ch }); });
+    const programs = [];
+    if (settings.extended && wide.data && wideRoot && wideRoot.isConnected) {
+      channels.forEach(ch => (wide.data[ch.id] || []).forEach(it => {
+        if (it[2].toLowerCase().includes(query)) programs.push({ kind: 'program', ch, title: it[2], year: it[3], start: it[0], end: it[1], durSec: it[4] });
+      }));
+    } else {
+      const map = makeTimeMapper();
+      channels.forEach(ch => ch.row.querySelectorAll('.grid-program').forEach(cell => {
+        const c = readCell(cell);
+        if (!c.title.toLowerCase().includes(query)) return;
+        const timed = map && !isNaN(c.left) && !isNaN(c.width);
+        programs.push({ kind: 'program', ch, title: c.title, year: c.year, durSec: c.durSec, marathonTip: c.marathon ? c.tip : '',
+          start: timed ? map(c.left).getTime() : null, end: timed ? map(c.left + c.width).getTime() : null });
+      }));
+    }
+    programs.sort((a, b) => (a.start === null) - (b.start === null) || a.start - b.start);
+    return hits.concat(programs);
+  }
+
+  function startLabel(ms) {
+    const d = new Date(ms);
+    return (d.toDateString() === new Date().toDateString() ? '' : dayLabel(d) + ' ') + fmtTime(d);
+  }
+
+  function renderSearch() {
+    const query = searchInput.value.trim().toLowerCase();
+    const hits = query ? findHits(query) : [];
+    const shown = hits.slice(0, SEARCH_MAX_HITS);
+    searchCount.textContent = !query ? '' : !hits.length ? 'No matches' : hits.length + (hits.length === 1 ? ' match' : ' matches') + (hits.length > shown.length ? ' (first ' + shown.length + ' shown)' : '');
+    searchInfoToken++;
+    searchInfo.replaceChildren();
+    searchList.replaceChildren(...shown.map(hit => {
+      const b = el('button', 'delve-search-hit');
+      b.type = 'button';
+      const channelText = 'CH ' + hit.ch.number + ' ' + hit.ch.name;
+      if (hit.kind === 'channel') b.append(channelText);
+      else {
+        b.append(hit.title + (hit.year ? ' ' + hit.year : ''));
+        b.append(el('span', 'delve-search-where', (hit.start === null ? '' : startLabel(hit.start) + ' · ') + channelText));
+      }
+      b.addEventListener('click', () => {
+        searchList.querySelectorAll('.sel').forEach(n => n.classList.remove('sel'));
+        b.classList.add('sel');
+        showHitInfo(hit);
+      });
+      return b;
+    }));
+  }
+
+  function drawHitInfo(hit, found, state) {
+    const ch = found && found.ch, item = found && found.item, detail = (found && found.detail) || {};
+    const box = el('div', 'delve-prog-now');
+    box.append(el('div', 'guide-info-now-label', hit.kind === 'channel' ? 'Channel' : (hit.start !== null && hit.end !== null && statusText(hit.start, hit.end)) || 'Program'));
+    const titleRow = el('div', 'guide-info-now-title-row');
+    titleRow.append(el('div', 'guide-info-now-title', hit.kind === 'channel' ? hit.ch.name : (item && item.title) || hit.title));
+    const year = hit.kind === 'program' && ((item && item.year) || hit.year);
+    if (year) titleRow.append(el('span', 'btag btag-ghost', year));
+    if (detail.season != null && detail.episode != null) titleRow.append(el('span', 'btag btag-ghost', 'S' + detail.season + ' E' + detail.episode));
+    box.append(titleRow);
+    const bits = [];
+    if (hit.kind === 'program') {
+      if (hit.start !== null && hit.end !== null) bits.push(fmtTime(new Date(hit.start)) + ' – ' + fmtTime(new Date(hit.end)));
+      const secs = (item && item.duration) || hit.durSec;
+      if (secs) bits.push(fmtDur(secs));
+    }
+    bits.push('CH ' + hit.ch.number + ' ' + hit.ch.name);
+    box.append(el('div', 'guide-info-now-desc', bits.join('  ·  ')));
+    if (hit.marathonTip) {
+      const mar = parseMarathon(hit.marathonTip);
+      box.append(el('div', 'guide-info-now-desc', mar.shows.length ? (mar.head || 'Marathon block') + ':' : 'A back-to-back block of programs.'));
+      mar.shows.forEach(show => box.append(el('div', 'guide-info-now-desc', show.time + '  ' + show.title)));
+    } else {
+      const fallback = (ch && ch.description) || 'No description available.';
+      box.append(el('div', 'guide-info-now-desc', state === 'loading' ? 'Loading details…' : state === 'error' ? 'Could not load details.' : hit.kind === 'channel' ? fallback : detail.description || fallback));
+    }
+    const links = makeLinks(detail, item);
+    if (links) box.append(links);
+    searchInfo.replaceChildren(box);
+  }
+
+  async function showHitInfo(hit) {
+    const token = ++searchInfoToken;
+    drawHitInfo(hit, null, 'loading');
+    let found = null, state = '';
+    try {
+      if (hit.kind === 'channel' || hit.marathonTip) {
+        const lineup = await getLineup();
+        found = { ch: (lineup.channels || []).find(c => c.id === hit.ch.id) || null, item: null, detail: null };
+      } else found = await findProgram(hit.ch.id, hit.title, hit.durSec);
+    } catch (e) { state = 'error'; }
+    if (token === searchInfoToken) drawHitInfo(hit, found, state);
   }
 
   // ---------------------------------------------------------------------------
