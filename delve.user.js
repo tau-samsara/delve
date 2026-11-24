@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.32.0
+// @version      0.32.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -174,7 +174,7 @@ ${L} .stage--guide .guide-info-description { margin-bottom: 6px; }
    between the buttons (it used to be drawn over "Up next" like a glitch). */
 ${L} .stage--guide .guide-actions { position: sticky; bottom: -9px; z-index: 2; margin: 0 -16px -9px; padding: 6px 16px 15px; background: inherit; }   /* the card has 9px of bottom padding: the bar covers it too */
 ${L} .tv-grid { min-height: 0; }
-${L} .grid-row.active .grid-channel-num::after { content: ' \\25B6'; color: var(--gold); font-size: .8em; }
+${L} .app--guide .grid-row.active .grid-channel-num::after { content: ' \\25B6'; color: var(--gold); font-size: .8em; }
 ${L} .app--guide .prevue-header-clock { white-space: nowrap; }
 /* Only guide view, watch mode and channel mode (.app--watch.app--channel), not the other pages. */
 ${L} .app--guide *, ${L} .app--watch * { scrollbar-width: thin; }
