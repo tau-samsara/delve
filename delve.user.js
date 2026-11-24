@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.33.4
+// @version      0.34.0
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -84,8 +84,17 @@
     levelTarget: -23,     // LUFS, LEVEL_RANGE
     hideOn: false,        // HIDE button opens a popup: off, comments, reactions or both
     hideMode: 'off',      // HIDE_MODES
+    watermarkOn: false,   // WATERMARK button: the channel logo shown over a corner of the picture
+    watermarkShow: false, // the popup's On / Off
+    watermarkSize: 8,     // percent of the picture height, WATERMARK_SLIDERS
+    watermarkOpacity: 50, // percent, WATERMARK_SLIDERS
+    watermarkCorner: 'bottom-right',   // WATERMARK_CORNERS
+    watermarkLogo: 'original',         // WATERMARK_LOGOS
   };
-  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock'], ['pictureOn', 'Picture tweaks'], ['audioOn', 'Audio tweaks'], ['hideOn', 'Hide options']];
+  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock'], ['pictureOn', 'Picture tweaks'], ['audioOn', 'Audio tweaks'], ['hideOn', 'Hide options'], ['watermarkOn', 'Watermark']];
+  const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 10, max: 100, step: 5 }]];
+  const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
+  const WATERMARK_LOGOS = [['original', 'Original'], ['contrast', 'B&W']];
   const HIDE_MODES = [['off', 'Off'], ['both', 'Both'], ['comments', 'Comments'], ['reactions', 'Reactions']];
   const BOOST_RANGE = { min: 100, max: 300, step: 5 };
   const SYNC_RANGE = { min: -1000, max: 1000, step: 10 };   // ms
@@ -123,6 +132,12 @@
         if (typeof parsed.mono === 'boolean') out.mono = parsed.mono;
         if (MONO_SOURCES.some(([key]) => key === parsed.monoSource)) out.monoSource = parsed.monoSource;
         if (HIDE_MODES.some(([key]) => key === parsed.hideMode)) out.hideMode = parsed.hideMode;
+        if (typeof parsed.watermarkShow === 'boolean') out.watermarkShow = parsed.watermarkShow;
+        WATERMARK_SLIDERS.forEach(([key, , range]) => {
+          if (Number.isInteger(parsed[key]) && parsed[key] >= range.min && parsed[key] <= range.max) out[key] = parsed[key];
+        });
+        if (WATERMARK_CORNERS.some(([key]) => key === parsed.watermarkCorner)) out.watermarkCorner = parsed.watermarkCorner;
+        if (WATERMARK_LOGOS.some(([key]) => key === parsed.watermarkLogo)) out.watermarkLogo = parsed.watermarkLogo;
         if (Object.prototype.hasOwnProperty.call(SORTS, parsed.sort)) out.sort = parsed.sort;
       }
     } catch (e) { /* use defaults */ }
@@ -142,6 +157,7 @@
     applyPicture();
     applyAudio();
     applyHide();
+    applyWatermark();
     syncDrawer();
   }
 
@@ -415,7 +431,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + WATERMARK_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -3026,6 +3042,184 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       hideClickPassesThrough = false;
     }
   }
+  // ---------------------------------------------------------------------------
+  // Watermark: the channel's logo, copied from the player header, drawn over a corner of the picture itself (the video
+  // element also covers the black bars, so the picture's box is worked out from the stream's size).
+  // ---------------------------------------------------------------------------
+  const WATERMARK_CSS = `
+.delve-wm-picture { position: absolute; display: flex; box-sizing: border-box; padding: calc(var(--delve-wm-size) * .3); pointer-events: none; }
+.delve-wm-picture[hidden] { display: none; }
+.delve-wm-picture[data-corner^="bottom"] { align-items: flex-end; }
+.delve-wm-picture[data-corner$="right"] { justify-content: flex-end; }
+.delve-wm-mark { flex: none; width: var(--delve-wm-size); height: var(--delve-wm-size); opacity: var(--delve-wm-opacity); overflow: hidden; }
+.delve-wm-mark svg { display: block; width: 100%; height: 100%; }
+.delve-watermark-panel[hidden] { display: none; }
+.delve-watermark-ctl .delve-watermark-panel { width: 300px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
+@media (max-width: 480px) { :root .delve-watermark-ctl .delve-watermark-panel { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); } }
+.delve-watermark-panel .cc-panel-head { display: flex; justify-content: space-between; text-align: left; }
+.delve-watermark-panel .delve-seg { gap: 4px; }
+:root .delve-watermark-panel .delve-seg button { padding-left: 2px; padding-right: 2px; letter-spacing: 0; font-size: 16px; }
+:root .delve-watermark-panel .delve-slider.player-volume-slider { display: block; flex: none; width: 100%; max-width: none; margin: 0 0 4px; box-sizing: border-box; }
+`;
+  const WATERMARK_LOGO_SELECTOR = '.stage--watch .player-channel-logo svg';
+  const watermarkWatchedVideos = new WeakSet();
+  let watermarkLogoMarkup = '';
+  let watermarkPanel = null;
+  function placeWatermark() {
+    const box = document.querySelector('.delve-wm-picture');
+    const video = box && box.parentElement.querySelector('video');
+    if (!video) return;
+    const { videoWidth, videoHeight, offsetLeft, offsetTop, clientWidth, clientHeight } = video;
+    if (!videoWidth || !videoHeight || !clientWidth || !clientHeight) { box.hidden = true; return; }
+    const scale = Math.min(clientWidth / videoWidth, clientHeight / videoHeight);
+    const width = videoWidth * scale, height = videoHeight * scale;
+    box.hidden = false;
+    Object.assign(box.style, { left: offsetLeft + (clientWidth - width) / 2 + 'px', top: offsetTop + (clientHeight - height) / 2 + 'px', width: width + 'px', height: height + 'px' });
+    box.style.setProperty('--delve-wm-size', Math.round(height * settings.watermarkSize / 100) + 'px');
+    box.style.setProperty('--delve-wm-opacity', settings.watermarkOpacity / 100);
+  }
+  // B&W: parts lighter than mid-grey become white, the rest is removed (a blend or filter over the video changes its picture).
+  function blackAndWhite(svg) {
+    svg.querySelectorAll('[fill]').forEach(part => {
+      const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(part.getAttribute('fill'));
+      if (!hex) return;
+      const [red, green, blue] = hex.slice(1).map(channel => parseInt(channel, 16));
+      if (0.2126 * red + 0.7152 * green + 0.0722 * blue > 127.5) part.setAttribute('fill', '#fff');
+      else part.remove();
+    });
+    return svg;
+  }
+  function ensureWatermarkMark() {
+    const wrap = document.querySelector('.app--watch .stage--watch .stage-video-wrap');
+    const video = wrap && wrap.querySelector('video');
+    const logo = document.querySelector(WATERMARK_LOGO_SELECTOR);
+    let box = document.querySelector('.delve-wm-picture');
+    if (!settings.watermarkOn || !settings.watermarkShow || !video || !logo) {
+      if (settings.watermarkOn && settings.watermarkShow && wrap) warnMissing(WATERMARK_LOGO_SELECTOR, 'Watermark');
+      box?.remove();
+      watermarkLogoMarkup = '';
+      return;
+    }
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'delve-wm-picture';
+      box.append(document.createElement('div'));
+      box.firstChild.className = 'delve-wm-mark';
+      watermarkLogoMarkup = '';
+    }
+    if (box.parentElement !== wrap) wrap.append(box);
+    box.dataset.corner = settings.watermarkCorner;
+    box.dataset.logo = settings.watermarkLogo;
+    const logoKey = settings.watermarkLogo + logo.outerHTML;
+    if (logoKey !== watermarkLogoMarkup) {
+      watermarkLogoMarkup = logoKey;
+      const copy = logo.cloneNode(true);
+      box.firstChild.replaceChildren(settings.watermarkLogo === 'contrast' ? blackAndWhite(copy) : copy);
+    }
+    if (!watermarkWatchedVideos.has(video)) {
+      watermarkWatchedVideos.add(video);
+      ['loadedmetadata', 'resize'].forEach(type => video.addEventListener(type, placeWatermark));
+      new ResizeObserver(placeWatermark).observe(video);
+    }
+    placeWatermark();
+  }
+  function applyWatermark() {
+    syncWatermarkPanel();
+    ensureWatermarkMark();
+  }
+  function syncWatermarkPanel() {
+    if (!watermarkPanel) return;
+    const showToggle = watermarkPanel.querySelector('[data-watermark-show]');
+    showToggle.textContent = settings.watermarkShow ? 'On' : 'Off';
+    showToggle.setAttribute('aria-pressed', String(settings.watermarkShow));
+    showToggle.classList.toggle('popup-toggle-btn--on', settings.watermarkShow);
+    WATERMARK_SLIDERS.forEach(([key, , range]) => {
+      const slider = watermarkPanel.querySelector('input[data-watermark="' + key + '"]');
+      slider.value = settings[key];
+      slider.style.setProperty('--volume-pct', (settings[key] - range.min) / (range.max - range.min) * 100 + '%');
+      watermarkPanel.querySelector('[data-watermark-value="' + key + '"]').textContent = settings[key] + '%';
+    });
+    watermarkPanel.querySelectorAll('[data-watermark-choice]').forEach(button => {
+      const on = settings[button.dataset.watermarkChoice] === button.dataset.watermarkKey;
+      button.setAttribute('aria-pressed', String(on));
+      button.classList.toggle('popup-toggle-btn--on', on);
+    });
+  }
+  function buildWatermarkPanel() {
+    watermarkPanel = document.createElement('div');
+    watermarkPanel.className = 'cc-panel delve-watermark-panel';
+    watermarkPanel.hidden = true;
+    const showHead = document.createElement('div');
+    showHead.className = 'cc-panel-head';
+    const showToggle = document.createElement('button');
+    showToggle.type = 'button'; showToggle.className = 'popup-toggle-btn'; showToggle.dataset.watermarkShow = '';
+    showToggle.addEventListener('click', () => setSettings({ watermarkShow: !settings.watermarkShow }));
+    showHead.append('Watermark', showToggle);
+    watermarkPanel.append(showHead);
+    WATERMARK_SLIDERS.forEach(([key, name, range]) => {
+      const label = document.createElement('label');
+      label.className = 'cc-panel-head';
+      const value = document.createElement('span');
+      value.dataset.watermarkValue = key;
+      const slider = document.createElement('input');
+      slider.type = 'range'; slider.className = 'player-volume-slider delve-slider'; slider.dataset.watermark = key;
+      slider.min = range.min; slider.max = range.max; slider.step = range.step;
+      slider.addEventListener('input', () => setSettings({ [key]: Number(slider.value) }));
+      label.append(name, value);
+      watermarkPanel.append(label, slider);
+    });
+    [['watermarkCorner', 'Corner', WATERMARK_CORNERS], ['watermarkLogo', 'Logo', WATERMARK_LOGOS]].forEach(([setting, name, choices]) => {
+      const head = document.createElement('div');
+      head.className = 'cc-panel-head';
+      head.append(name);
+      const row = document.createElement('div');
+      row.className = 'delve-seg';
+      choices.forEach(([key, text, title]) => {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'popup-toggle-btn'; button.textContent = text;
+        button.dataset.watermarkChoice = setting; button.dataset.watermarkKey = key;
+        if (title) button.title = title;
+        button.addEventListener('click', () => setSettings({ [setting]: key }));
+        row.append(button);
+      });
+      watermarkPanel.append(head, row);
+    });
+    syncWatermarkPanel();
+  }
+  function setWatermarkPanelOpen(open) {
+    if (!watermarkPanel) return;
+    watermarkPanel.hidden = !open;
+    watermarkPanel.parentElement.classList.toggle('subtitle-ctl--open', open);
+    watermarkPanel.parentElement.querySelector('#delve-watermark').setAttribute('aria-expanded', open);
+  }
+  document.addEventListener('mousedown', e => {
+    if (watermarkPanel && !watermarkPanel.hidden && !e.target.closest('.delve-watermark-ctl')) setWatermarkPanelOpen(false);
+  }, true);
+  function ensureWatermark() {
+    const stage = document.querySelector('.app--watch .stage--watch');
+    const bar = stage && stage.querySelector('.stage-volume-bar');
+    if (!settings.watermarkOn || !stage || !bar) {
+      if (settings.watermarkOn && stage) warnMissing('.stage-volume-bar', 'Watermark');
+      setWatermarkPanelOpen(false);
+      document.querySelector('.delve-watermark-ctl')?.remove();
+      ensureWatermarkMark();
+      return;
+    }
+    let ctl = document.querySelector('.delve-watermark-ctl');
+    if (!ctl) {
+      ctl = document.createElement('span');
+      ctl.className = 'subtitle-ctl delve-watermark-ctl';
+      const button = document.createElement('button');
+      button.id = 'delve-watermark'; button.type = 'button'; button.className = 'popup-toggle-btn'; button.textContent = 'WATERMARK';
+      button.title = 'Channel logo over the picture';
+      button.setAttribute('aria-expanded', 'false');
+      if (!watermarkPanel) buildWatermarkPanel();
+      button.addEventListener('click', () => setWatermarkPanelOpen(watermarkPanel.hidden));
+      ctl.append(button, watermarkPanel);
+    }
+    if (ctl.parentElement !== bar) bar.append(ctl);
+    ensureWatermarkMark();
+  }
   const THEATER_IDLE_MS = 3000;
   let theaterIdleTimer = 0;
   const inTheater = () => root.hasAttribute('data-delve-theater');
@@ -3203,6 +3397,7 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       ensurePicture();
       ensureAudio();
       ensureHide();
+      ensureWatermark();
       ensureClock24();
       ensureGuide();
     });
@@ -3216,7 +3411,7 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
   observer.observe(root, { childList: true, subtree: true });
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
-    applyLayout(); ensureButtons();
+    applyLayout(); ensureButtons(); placeWatermark();
     resizeQuietAt = Date.now() + 250;   // the extended guide is rebuilt once the window stops resizing
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { ensureWide(); updateWideBg(); }, 260);

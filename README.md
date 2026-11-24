@@ -156,10 +156,11 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens the audio panel; see [Audio tweaks](#audio-tweaks) above)
 - Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a small panel with Brightness and Contrast sliders, 50% to 150%; the video changes as you drag, in every view. Click elsewhere to close. The settings are remembered)
 - Hide options (the site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**. Comments hides the comment markers on the scrub bar and the comment pop-ups on the video; Reactions hides the reaction strip on the scrub bar; Both hides all of them. The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row)
+- Watermark (a WATERMARK button in the player's key row opens a popup that puts the channel's logo over a corner of the picture itself, not over the black bars. **On/Off**, **Size** (4% to 20% of the picture height), **Opacity** (10% to 100%), **Corner** and **Logo** (Original, or **B&W**: the logo's light parts in white, its dark parts see-through). The watermark is Off until you turn it on in the popup. The settings are remembered)
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), the Hide choice, and the feature switches. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), the Hide choice, the watermark settings, and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
@@ -180,7 +181,6 @@ Ideas under consideration:
 - Hotkeys
 - Picture tweaks beyond brightness and contrast (saturation, dim, lights-out)
 - Channel flipper, "Spelunk my favorites" and auto-surf
-- Channel watermark toggle or opacity
 - A test pattern screen when a stream fails
 - Start times, past blocks and "late night" labels in the guide
 - Tooltips for tags like [rewind]
