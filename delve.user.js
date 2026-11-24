@@ -2242,14 +2242,17 @@ html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: 
 html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) contrast(var(--delve-contrast)); }
 .delve-picture-panel { position: fixed; z-index: 9001; box-sizing: border-box; width: 240px; padding: 8px 12px 12px; background: var(--bg-panel, #0d1238); color: var(--text, #e8eaf0); border: var(--border-width, 3px) solid var(--border-bold, #4a5aaa); font-family: var(--font-mono, "Courier New", monospace); font-size: 12px; }
 .delve-picture-panel[hidden] { display: none; }
-.delve-slider { display: block; width: 100%; margin: 0; accent-color: var(--gold, #ffd740); }
+/* The sliders take the site's volume slider look (player-volume-slider); only the size is ours. */
+:root .delve-picture-panel .delve-slider.player-volume-slider { display: block; width: 100%; max-width: none; margin: 6px 0 4px; box-sizing: border-box; }
 .delve-slider-label { display: flex; justify-content: space-between; margin-top: 8px; color: var(--cyan, #00ccdd); letter-spacing: .06em; text-transform: uppercase; }
 `;
   let picturePanel = null;
   function syncPicturePanel() {
     if (!picturePanel) return;
     PICTURE_SLIDERS.forEach(([key]) => {
-      picturePanel.querySelector('input[data-picture="' + key + '"]').value = settings[key];
+      const slider = picturePanel.querySelector('input[data-picture="' + key + '"]');
+      slider.value = settings[key];
+      slider.style.setProperty('--volume-pct', (settings[key] - PICTURE_RANGE.min) / (PICTURE_RANGE.max - PICTURE_RANGE.min) * 100 + '%');
       picturePanel.querySelector('[data-picture-value="' + key + '"]').textContent = settings[key] + '%';
     });
   }
@@ -2263,7 +2266,7 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
       const value = document.createElement('span');
       value.dataset.pictureValue = key;
       const slider = document.createElement('input');
-      slider.type = 'range'; slider.className = 'delve-slider'; slider.dataset.picture = key;
+      slider.type = 'range'; slider.className = 'player-volume-slider delve-slider'; slider.dataset.picture = key;
       slider.min = PICTURE_RANGE.min; slider.max = PICTURE_RANGE.max; slider.step = PICTURE_RANGE.step;
       slider.addEventListener('input', () => setSettings({ [key]: Number(slider.value) }));
       label.append(name, value);
