@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.33.0
+// @version      0.33.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2341,7 +2341,9 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
   // ---------------------------------------------------------------------------
   const AUDIO_CSS = `
 .delve-audio-panel[hidden] { display: none; }
-.delve-audio-ctl .delve-audio-panel { width: 200px; left: 0; right: auto; transform: none; }
+.delve-audio-ctl .delve-audio-panel { width: 300px; max-width: calc(100vw - 40px); left: 0; right: auto; transform: none; }
+.delve-audio-panel .delve-seg { gap: 4px; }
+:root .delve-audio-panel .delve-seg button { padding-left: 2px; padding-right: 2px; letter-spacing: 0; font-size: 16px; }
 .delve-audio-panel .cc-panel-head { display: flex; justify-content: space-between; text-align: left; }
 :root .delve-audio-panel .delve-slider.player-volume-slider { display: block; flex: none; width: 100%; max-width: none; margin: 0 0 4px; box-sizing: border-box; }
 `;
@@ -2389,7 +2391,7 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
       meterBufferLeft: new Float32Array(4096), meterBufferRight: new Float32Array(4096),
       source: context.createMediaElementSource(video), splitter: context.createChannelSplitter(2), route: '', leveling: false, night: false,
     };
-    setInterval(levelTick, LEVEL_TICK_MS);
+    setInterval(() => { levelTick(); detectTick(); }, LEVEL_TICK_MS);
     applyAudio();
   }
 
@@ -2475,6 +2477,45 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
     leveler.gainDb += (wantedDb - leveler.gainDb) * (1 - Math.exp(-seconds / tau));
   }
 
+  // Channel detection (the AUTO choice next to LEFT | MIX | RIGHT). Listens to the left and right meters; once it is confident
+  // it turns Mono on with Left (right side dead), Right (left side dead) or Mix (sides uneven), then stops until the user
+  // selects AUTO again. Evenly balanced sound changes nothing.
+  const DETECT_MIN_SOUNDS = 100, DETECT_WINDOW_SOUNDS = 300;   // 10 s of sound before deciding, the last 30 s kept
+  const DETECT_DEAD_DB = 30, DETECT_UNEVEN_DB = 1.5;             // left-right energy difference that counts as dead / uneven
+  let monoDetection = null;   // { sounds: [[left power, right power], ...] } while listening, otherwise null
+
+  function startMonoDetection() {
+    monoDetection = { sounds: [] };
+    syncAudioPanel();
+  }
+
+  function classifyChannels(sounds) {
+    const left = sounds.reduce((sum, sound) => sum + sound[0], 0), right = sounds.reduce((sum, sound) => sum + sound[1], 0);
+    const differenceDb = 10 * Math.log10((left + 1e-20) / (right + 1e-20));
+    if (differenceDb >= DETECT_DEAD_DB) return 'left';
+    if (differenceDb <= -DETECT_DEAD_DB) return 'right';
+    return Math.abs(differenceDb) >= DETECT_UNEVEN_DB ? 'mix' : 'even';
+  }
+
+  function detectTick() {
+    if (!monoDetection || !audioGraph || !settings.audioOn) return;
+    const { video, context, meterLeft, meterRight, meterBufferLeft, meterBufferRight } = audioGraph;
+    if (context.state !== 'running' || video.paused || video.muted || video.ended || !(video.volume >= LEVEL_MIN_VOLUME)) return;
+    meterLeft.getFloatTimeDomainData(meterBufferLeft); meterRight.getFloatTimeDomainData(meterBufferRight);
+    const left = meanSquare(meterBufferLeft) / (video.volume * video.volume), right = meanSquare(meterBufferRight) / (video.volume * video.volume);
+    if (Math.max(left, right) < lufsToPower(LEVEL_GATE_LUFS)) return;   // silence says nothing about the channels
+    const sounds = monoDetection.sounds;
+    sounds.push([left, right]);
+    if (sounds.length > DETECT_WINDOW_SOUNDS) sounds.shift();
+    if (sounds.length < DETECT_MIN_SOUNDS) return;
+    const half = Math.floor(sounds.length / 2);
+    const verdict = classifyChannels(sounds);
+    if (classifyChannels(sounds.slice(0, half)) !== verdict || classifyChannels(sounds.slice(half)) !== verdict) return;   // not steady yet
+    monoDetection = null;
+    if (verdict === 'even') syncAudioPanel();
+    else setSettings({ mono: true, monoSource: verdict });
+  }
+
   function levelTick() {
     if (!audioGraph || !audioGraph.leveling) return;
     const { video, context, levelGain, meterLeft, meterRight, meterBufferLeft, meterBufferRight } = audioGraph;
@@ -2530,6 +2571,7 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
   function startAudioStream(video, url) {
     stopAudioStream();
     resetLeveler();
+    if (monoDetection) monoDetection.sounds = [];
     const mediaSource = new MediaSource();
     const objectUrl = URL.createObjectURL(mediaSource);
     const mp4 = MP4Box.createFile();
@@ -2761,10 +2803,6 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
     slider.value = settings.boost;
     slider.style.setProperty('--volume-pct', (settings.boost - BOOST_RANGE.min) / (BOOST_RANGE.max - BOOST_RANGE.min) * 100 + '%');
     audioPanel.querySelector('[data-audio-value]').textContent = settings.boost + '%';
-    const monoToggle = audioPanel.querySelector('[data-audio-mono]');
-    monoToggle.textContent = settings.mono ? 'On' : 'Off';
-    monoToggle.setAttribute('aria-pressed', String(settings.mono));
-    monoToggle.classList.toggle('popup-toggle-btn--on', settings.mono);
     const nightToggle = audioPanel.querySelector('[data-audio-night]');
     nightToggle.textContent = settings.night ? 'On' : 'Off';
     nightToggle.setAttribute('aria-pressed', String(settings.night));
@@ -2781,8 +2819,9 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
     levelSlider.value = settings.levelTarget;
     levelSlider.style.setProperty('--volume-pct', (settings.levelTarget - LEVEL_RANGE.min) / (LEVEL_RANGE.max - LEVEL_RANGE.min) * 100 + '%');
     audioPanel.querySelector('[data-level-value]').textContent = settings.levelTarget + ' LUFS';
-    audioPanel.querySelectorAll('[data-mono-source]').forEach(button => {
-      const on = button.dataset.monoSource === settings.monoSource;
+    audioPanel.querySelectorAll('[data-mono-choice]').forEach(button => {
+      const choice = button.dataset.monoChoice;
+      const on = choice === 'auto' ? !!monoDetection : !monoDetection && (choice === 'off' ? !settings.mono : settings.mono && settings.monoSource === choice);
       button.setAttribute('aria-pressed', String(on));
       button.classList.toggle('popup-toggle-btn--on', on);
     });
@@ -2802,17 +2841,19 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
     label.append('Volume boost', value);
     const monoHead = document.createElement('div');
     monoHead.className = 'cc-panel-head';
-    const monoToggle = document.createElement('button');
-    monoToggle.type = 'button'; monoToggle.className = 'popup-toggle-btn'; monoToggle.dataset.audioMono = '';
-    monoToggle.addEventListener('click', () => setSettings({ mono: !settings.mono }));
-    monoHead.append('Mono', monoToggle);
-    const sources = document.createElement('div');
-    sources.className = 'delve-seg';
-    MONO_SOURCES.forEach(([key, name]) => {
+    monoHead.append('Mono');
+    const monoChoices = document.createElement('div');
+    monoChoices.className = 'delve-seg';
+    [['off', 'Off'], ['auto', 'Auto'], ...MONO_SOURCES].forEach(([key, name]) => {
       const button = document.createElement('button');
-      button.type = 'button'; button.className = 'popup-toggle-btn'; button.dataset.monoSource = key; button.textContent = name;
-      button.addEventListener('click', () => setSettings({ monoSource: key }));
-      sources.append(button);
+      button.type = 'button'; button.className = 'popup-toggle-btn'; button.dataset.monoChoice = key; button.textContent = name;
+      if (key === 'auto') button.title = 'Listen for a silent or weak side, then turn Mono on with Left, Right or Mix';
+      button.addEventListener('click', () => {
+        if (key === 'auto') { startMonoDetection(); return; }
+        monoDetection = null;
+        setSettings(key === 'off' ? { mono: false } : { mono: true, monoSource: key });
+      });
+      monoChoices.append(button);
     });
     const levelHead = document.createElement('div');
     levelHead.className = 'cc-panel-head';
@@ -2844,7 +2885,7 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
     nightToggle.type = 'button'; nightToggle.className = 'popup-toggle-btn'; nightToggle.dataset.audioNight = '';
     nightToggle.addEventListener('click', () => setSettings({ night: !settings.night }));
     nightHead.append('Night mode', nightToggle);
-    audioPanel.append(label, slider, syncLabel, syncSlider, monoHead, sources, levelHead, targetLabel, targetSlider, nightHead);
+    audioPanel.append(label, slider, syncLabel, syncSlider, monoHead, monoChoices, levelHead, targetLabel, targetSlider, nightHead);
     syncAudioPanel();
   }
   function setAudioPanelOpen(open) {
