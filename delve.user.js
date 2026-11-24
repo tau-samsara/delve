@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.0
+// @version      0.34.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -3078,14 +3078,23 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     box.style.setProperty('--delve-wm-size', Math.round(height * settings.watermarkSize / 100) + 'px');
     box.style.setProperty('--delve-wm-opacity', settings.watermarkOpacity / 100);
   }
-  // B&W: parts lighter than mid-grey become white, the rest is removed (a blend or filter over the video changes its picture).
+  // B&W: the logo's second fill is its background and is removed (a blend or filter over the video changes its picture).
+  // The other fills become grays, the brightest white and each next one a step darker.
+  const BACKGROUND_MIN_RECTS = 8;   // a smaller second fill is an accent (channel 201); its background is the third
+  const GRAY_STEP = 30;
+  const brightnessOf = part => {
+    const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(part.getAttribute('fill'));
+    if (!hex) return 0;
+    const [red, green, blue] = hex.slice(1).map(channel => parseInt(channel, 16));
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
   function blackAndWhite(svg) {
-    svg.querySelectorAll('[fill]').forEach(part => {
-      const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(part.getAttribute('fill'));
-      if (!hex) return;
-      const [red, green, blue] = hex.slice(1).map(channel => parseInt(channel, 16));
-      if (0.2126 * red + 0.7152 * green + 0.0722 * blue > 127.5) part.setAttribute('fill', '#fff');
-      else part.remove();
+    const fills = Array.from(svg.querySelectorAll(':scope > g[fill]'));
+    const background = fills[1] && fills[1].children.length < BACKGROUND_MIN_RECTS ? fills[2] : fills[1];
+    background?.remove();
+    fills.filter(part => part !== background).sort((a, b) => brightnessOf(b) - brightnessOf(a)).forEach((part, step) => {
+      const gray = Math.max(255 - step * GRAY_STEP, 0).toString(16).padStart(2, '0');
+      part.setAttribute('fill', '#' + gray + gray + gray);
     });
     return svg;
   }
