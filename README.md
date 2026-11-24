@@ -87,7 +87,7 @@ The **Sort** drop-down in the guide toolbar orders the channels by:
 
 The **Search** button in the guide toolbar opens a popup with a text box. Type part of a channel name or number, or a show title. Results list the matching channels and the programs that are loaded: what the guide shows, or the whole timeline when the Extended guide is on. Channels hidden by the Favorites button are not searched.
 
-The results are on the left. Click one and its information appears on the right: title, year, season and episode, time, length, channel, description, and IMDb and Internet Archive links. A channel shows its name and description. On a phone the information sits below the results. Close the popup with ✕ or by clicking outside it.
+The results are on the left. Click one and its information appears on the right. At the top is the channel (icon, name, number and description) with a **Tune to channel** button, which closes the popup and tunes that channel. Under it, for a program: title, year, season and episode, time, length, description, and IMDb and Internet Archive links. A channel result shows only the channel part. On a phone the information sits below the results. Close the popup with ✕ or by clicking outside it.
 
 ### Extended guide
 

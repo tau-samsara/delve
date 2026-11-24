@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.31.3
+// @version      0.31.4
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1362,6 +1362,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
 .delve-search-hit { display: block; width: 100%; box-sizing: border-box; padding: 6px 8px; text-align: left; color: inherit; background: transparent; border: 0; border-bottom: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; cursor: pointer; }
 .delve-search-hit:hover { background: rgba(255, 255, 255, .08); }
 .delve-search-hit.sel { outline: 2px solid var(--gold, #ffd740); outline-offset: -2px; }
+.delve-search-tune { display: block; margin: var(--space-2, 8px) 0 var(--space-3, 12px); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
 .delve-search-where { display: block; font-size: 12px; opacity: .75; }
 @media (max-width: 640px) {
   .delve-search-body { flex-direction: column; }
@@ -1479,35 +1480,49 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     }));
   }
 
+  function tuneTo(ch) {
+    const info = ch.row.isConnected && ch.row.querySelector('.grid-channel-info');
+    if (!info) return warnMissing('.grid-channel-info', 'Search tune button');
+    closeSearch();
+    info.click();
+  }
+
   function drawHitInfo(hit, found, state) {
     const ch = found && found.ch, item = found && found.item, detail = (found && found.detail) || {};
-    const box = el('div', 'delve-prog-now');
-    box.append(el('div', 'guide-info-now-label', hit.kind === 'channel' ? 'Channel' : (hit.start !== null && hit.end !== null && statusText(hit.start, hit.end)) || 'Program'));
-    const titleRow = el('div', 'guide-info-now-title-row');
-    titleRow.append(el('div', 'guide-info-now-title', hit.kind === 'channel' ? hit.ch.name : (item && item.title) || hit.title));
-    const year = hit.kind === 'program' && ((item && item.year) || hit.year);
-    if (year) titleRow.append(el('span', 'btag btag-ghost', year));
-    if (detail.season != null && detail.episode != null) titleRow.append(el('span', 'btag btag-ghost', 'S' + detail.season + ' E' + detail.episode));
-    box.append(titleRow);
-    const bits = [];
+    const wrap = el('div');
+    const chHead = buildChannelHead(hit.ch.id, ch);
+    if (chHead) { wrap.append(chHead.head); if (chHead.desc) wrap.append(chHead.desc); }
+    else wrap.append(el('div', 'guide-info-now-title', 'CH ' + hit.ch.number + ' ' + hit.ch.name));
+    const tune = el('button', 'bbtn bbtn-gold delve-search-tune', 'Tune to channel');
+    tune.type = 'button';
+    tune.addEventListener('click', () => tuneTo(hit.ch));
+    wrap.append(tune);
     if (hit.kind === 'program') {
+      const box = el('div', 'delve-prog-now');
+      box.append(el('div', 'guide-info-now-label', (hit.start !== null && hit.end !== null && statusText(hit.start, hit.end)) || 'Program'));
+      const titleRow = el('div', 'guide-info-now-title-row');
+      titleRow.append(el('div', 'guide-info-now-title', (item && item.title) || hit.title));
+      const year = (item && item.year) || hit.year;
+      if (year) titleRow.append(el('span', 'btag btag-ghost', year));
+      if (detail.season != null && detail.episode != null) titleRow.append(el('span', 'btag btag-ghost', 'S' + detail.season + ' E' + detail.episode));
+      box.append(titleRow);
+      const bits = [];
       if (hit.start !== null && hit.end !== null) bits.push(fmtTime(new Date(hit.start)) + ' – ' + fmtTime(new Date(hit.end)));
       const secs = (item && item.duration) || hit.durSec;
       if (secs) bits.push(fmtDur(secs));
+      if (bits.length) box.append(el('div', 'guide-info-now-desc', bits.join('  ·  ')));
+      if (hit.marathonTip) {
+        const mar = parseMarathon(hit.marathonTip);
+        box.append(el('div', 'guide-info-now-desc', mar.shows.length ? (mar.head || 'Marathon block') + ':' : 'A back-to-back block of programs.'));
+        mar.shows.forEach(show => box.append(el('div', 'guide-info-now-desc', show.time + '  ' + show.title)));
+      } else {
+        box.append(el('div', 'guide-info-now-desc', state === 'loading' ? 'Loading details…' : state === 'error' ? 'Could not load details.' : detail.description || 'No description available.'));
+      }
+      const links = makeLinks(detail, item);
+      if (links) box.append(links);
+      wrap.append(box);
     }
-    bits.push('CH ' + hit.ch.number + ' ' + hit.ch.name);
-    box.append(el('div', 'guide-info-now-desc', bits.join('  ·  ')));
-    if (hit.marathonTip) {
-      const mar = parseMarathon(hit.marathonTip);
-      box.append(el('div', 'guide-info-now-desc', mar.shows.length ? (mar.head || 'Marathon block') + ':' : 'A back-to-back block of programs.'));
-      mar.shows.forEach(show => box.append(el('div', 'guide-info-now-desc', show.time + '  ' + show.title)));
-    } else {
-      const fallback = (ch && ch.description) || 'No description available.';
-      box.append(el('div', 'guide-info-now-desc', state === 'loading' ? 'Loading details…' : state === 'error' ? 'Could not load details.' : hit.kind === 'channel' ? fallback : detail.description || fallback));
-    }
-    const links = makeLinks(detail, item);
-    if (links) box.append(links);
-    searchInfo.replaceChildren(box);
+    searchInfo.replaceChildren(wrap);
   }
 
   async function showHitInfo(hit) {
