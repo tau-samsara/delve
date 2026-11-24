@@ -44,7 +44,7 @@ Changes how the guide page is arranged. Pick one in the drawer:
 
 ![Split view with the video on the left](images/split.png)
 
-Wide and Split also apply to watch mode and channel mode, with smooth transitions between modes. On phone-width windows (768 px and under) the site's own single-column layout is used and Delve steps aside.
+Wide and Split also apply to watch mode and channel mode, with smooth transitions between modes. In watch mode, Wide puts the guide below the video; Split puts the video on one half and the guide on the other, with no page scrolling. On phone-width windows (768 px and under) the site's own single-column layout is used and Delve steps aside.
 
 ### Program info
 
@@ -56,7 +56,7 @@ Click a program in the guide to see its details in the info column under the vid
 - links to **IMDb** and the **Internet Archive**, each with a small copy-link button
 - for marathons, the list of shows in the block
 
-Click the same program a second time to tune the preview to it. **<< Now Playing** takes you back. The IMDb and Archive links also appear under the currently playing program in the guide, watch and channel views.
+Click the same program a second time to tune the preview to it. **<< Now Playing** takes you back. In watch mode with the Split layout, the same card appears in a panel above the guide, closed with an X button in its top right corner instead of the << Now Playing link; in other layouts a click in watch mode tunes the channel. The IMDb and Archive links also appear under the currently playing program in the guide, watch and channel views.
 
 ![Program info shown after clicking a program](images/program-info.png)
 

@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.30.15
+// @version      0.31.0
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -252,6 +252,28 @@ html[data-delve-layout="split"] .app--guide .stage--guide .stage-video { width: 
    from 16px to 8px to match. */
 html[data-delve-layout="split"] .app--guide .stage--guide .stage-video-col { padding: 8px; box-shadow: var(--8s-ring); }
 html[data-delve-layout="split"] .app--guide .stage--guide .stage-info-col { flex: 0 1 auto; padding: 8px 18px 9px; }
+
+/* Split, watch mode: the player on one half, the guide on the other, fitted to the window like the guide view. */
+html[data-delve-layout="split"] .app--watch:not(.app--channel) {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 8px; height: var(--delve-h); min-height: 0; overflow: hidden;
+}
+html[data-delve-layout="split"] .app--watch:not(.app--channel) > .prevue-header-bar { grid-column: 1 / -1; grid-row: 1; }
+html[data-delve-layout="split"] .app--watch:not(.app--channel) > .statusbar { grid-column: 1 / -1; grid-row: 3; }
+html[data-delve-layout="split"] .app--watch:not(.app--channel) > .screen-row { grid-row: 2; grid-column: 1; display: flex; min-width: 0; min-height: 0; padding: 0 0 0 8px; }
+html[data-delve-layout="split"] .app--watch:not(.app--channel) > .screen-row > .stage--watch { flex: 1 1 0; height: auto; min-width: 0; margin: 0; }
+html[data-delve-layout="split"] .app--watch:not(.app--channel) > .tv-grid { grid-row: 2; grid-column: 2; margin: 8px 16px 8px 8px; min-height: 0; overflow-y: auto; }
+/* The site's info column is collapsed and inert in watch mode; Program information draws its own card above the guide. The
+   guide's frame is drawn 8px outside its box, so the card's side margins line it up with the guide's visible edge. */
+.delve-prog-close { position: absolute; top: 8px; right: 8px; z-index: 1; min-width: 0; padding: 2px 8px; font-weight: 700; cursor: pointer; }
+html[data-delve-layout="split"] .app--watch:not(.app--channel) > .delve-prog { position: relative; grid-row: 2; grid-column: 2; margin: 0 8px 0 0; max-height: calc(var(--delve-h) * .4); padding: 8px 18px 9px; background: var(--8s-box); box-shadow: var(--8s-ring); }
+html[data-delve-layout="split"][data-delve-prog] .app--watch:not(.app--channel) { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+html[data-delve-layout="split"][data-delve-prog] .app--watch:not(.app--channel) > .screen-row { grid-row: 2 / 4; }
+html[data-delve-layout="split"][data-delve-prog] .app--watch:not(.app--channel) > .tv-grid { grid-row: 3; }
+html[data-delve-layout="split"][data-delve-prog] .app--watch:not(.app--channel) > .statusbar { grid-row: 4; }
+html[data-delve-side="right"][data-delve-layout="split"] .app--watch:not(.app--channel) > .screen-row { grid-column: 2; padding: 0 8px 0 0; }
+html[data-delve-side="right"][data-delve-layout="split"] .app--watch:not(.app--channel) > .delve-prog { grid-column: 1; margin: 0 0 0 8px; }
+html[data-delve-side="right"][data-delve-layout="split"] .app--watch:not(.app--channel) > .tv-grid { grid-column: 1; margin: 8px 8px 8px 16px; }
 `;
 
   // ---------------------------------------------------------------------------
@@ -311,7 +333,7 @@ html[data-delve-prog] .stage-info-col > .guide-info-now,
 html[data-delve-prog] .stage-info-col > .guide-upcoming-divider,
 html[data-delve-prog] .stage-info-col > .guide-info-upcoming,
 html[data-delve-hdr] .stage-info-col > .guide-info-channel-header { display: none !important; }
-.app--guide .grid-program[data-delve-sel] { outline: 2px solid var(--gold, #ffd740); outline-offset: -2px; }
+.grid-program[data-delve-sel] { outline: 2px solid var(--gold, #ffd740); outline-offset: -2px; }
 /* The panel reuses the site's "now playing" / "up next" classes for matching fonts and colors. */
 /* While a clicked program's data loads, the current content stays under a dark layer. */
 html[data-delve-loading] .app--guide .stage-info-col { position: relative; }
@@ -779,15 +801,24 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
   let openToken = 0, lastHeight = 0, pollTimer = null;
   let lastInfo = null;    // { cell, info } of the card now shown, so a second click needs no new lookup
 
+  // Split in watch mode: the guide sits beside the player, so program information works there too.
+  const inSplitWatch = () => root.getAttribute('data-delve-layout') === 'split' && !!document.querySelector('.app--watch:not(.app--channel)');
+  const hasProgramInfo = () => !!document.querySelector('.app--guide') || inSplitWatch();
+
+  // Where the card lives: the guide's info column, or above the guide in Split's watch mode.
+  function panelHost() {
+    return document.querySelector('.app--guide .stage-info-col') || (inSplitWatch() ? document.querySelector('.app--watch') : null);
+  }
+
   function ensurePanel() {
-    const col = document.querySelector('.app--guide .stage-info-col');
+    const col = panelHost();
     if (!col) {
       if (document.querySelector('.app--guide')) warnMissing('.stage-info-col', 'Program information');
       return null;
     }
     if (!panel) panel = el('div', 'delve-prog');
     if (panel.parentNode !== col) {
-      const anchor = col.querySelector('.guide-actions-divider') || col.querySelector('.guide-actions');
+      const anchor = col.querySelector(':scope > .guide-actions-divider') || col.querySelector(':scope > .guide-actions');
       col.insertBefore(panel, anchor || null);
     }
     return panel;
@@ -795,8 +826,8 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
 
   // The site's channel header shows the tuned channel; copy it for the clicked program's channel.
   function buildChannelHead(channelId, ch) {
-    const siteHead = document.querySelector('.app--guide .stage-info-col > .guide-info-channel-header');
-    const row = channelId && document.querySelector('.app--guide .grid-row[data-channel="' + CSS.escape(channelId) + '"]');
+    const siteHead = document.querySelector('.stage-info-col > .guide-info-channel-header');
+    const row = channelId && document.querySelector('.tv-grid .grid-row[data-channel="' + CSS.escape(channelId) + '"]');
     const name = row && row.querySelector('.grid-channel-name-text');
     const num = row && row.querySelector('.grid-channel-num');
     if (!siteHead || !name || !num) {
@@ -920,7 +951,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     const p = ensurePanel();
     if (!p) return;
     p.textContent = '';
-    if (lastHeight) p.style.height = lastHeight + 'px';
+    p.style.height = lastHeight && p.parentNode.matches('.stage-info-col') ? lastHeight + 'px' : '';
     root.setAttribute('data-delve-prog', '1');
     root.removeAttribute('data-delve-loading');
     const { c, start, end, found } = info;
@@ -979,6 +1010,14 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
 
     const links = makeLinks(detail, item);
     if (links) now.append(links);
+    if (p.parentNode.matches('.app')) {   // above the guide in Split's watch mode: a close button instead of the link
+      const close = el('button', 'bbtn bbtn-outline delve-prog-close', 'X');
+      close.type = 'button';
+      close.title = 'Close';
+      close.addEventListener('click', closePanel);
+      p.append(close);
+      return;
+    }
     // "Back to now playing" link on its own line above the status label.
     const backRow = el('div', 'guide-info-now-desc delve-prog-links delve-prog-backrow');
     const back = el('a', null, '<< Now Playing');
@@ -1013,7 +1052,8 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
   // Moving to the clicked program's own channel (the second click) is fine.
   function pollSelection() {
     if (!progState) return;
-    if (!document.querySelector('.app--guide .tv-grid')) return closePanel();
+    if (!document.querySelector(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid')) return closePanel();
+    if (panel && panel.isConnected && panel.parentNode !== panelHost()) return closePanel();   // the view changed under the card
     const cur = highlightedChannel();
     if (cur === progState.baseline) return;
     if (cur === progState.channelId) { progState.baseline = cur; return; }
@@ -1101,14 +1141,14 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     }
     // Wider view in watch mode: no info card there (as on the site), a click on a program tunes its channel.
     const wcell = t.closest('.delve-wide-row .grid-program');
-    if (wcell && (!wcell.closest('.app--guide') || !settings.programInfo)) {   // (also in the guide view when Program information is off)
+    if (wcell && (!hasProgramInfo() || !settings.programInfo)) {   // (also in the guide view when Program information is off)
       e.stopPropagation(); e.preventDefault();
       const si = siteRowInfo(wcell.closest('.grid-row').dataset.channel);
       if (si) si.click();
       return;
     }
-    const cell = t.closest('.app--guide .grid-program');
-    if (cell && cell.closest('.delve-wide-row')) {   // Wider view in the guide view: first click info only, second click tunes
+    const cell = hasProgramInfo() ? t.closest('.grid-program') : null;
+    if (cell && cell.closest('.delve-wide-row')) {   // Wider view with a card: first click info only, second click tunes
       e.stopPropagation(); e.preventDefault();
       const second = cell.hasAttribute('data-delve-sel');
       openFor(cell, second);
@@ -1124,7 +1164,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
       openFor(cell, true);   // second click on the same card: the site tunes
       return;
     }
-    if (progState && t.closest('.app--guide .grid-row')) closePanel();
+    if (progState && hasProgramInfo() && t.closest('.tv-grid .grid-row')) closePanel();
   }, true);
 
   // ---------------------------------------------------------------------------
@@ -2021,8 +2061,9 @@ html[data-delve-pan] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     const F = stageBox, L = readBox(s);
     // Into the guide view the site holds the stage at its old height until its own move ends; its grid row is the final height.
     const rows = (getComputedStyle(appEl).gridTemplateRows || '').split(' ').map(parseFloat);
-    if (appEl.classList.contains('app--guide')) { if (rows.length === 3 && rows[1] > 0) L.h = rows[1]; }
-    else L.h = window.innerHeight - (appEl.classList.contains('app--channel') ? 100 : 64);   // the heights the Watch and Channel rules above give the stage
+    const inGrid = appEl.classList.contains('app--guide') || (appEl.classList.contains('app--watch') && !appEl.classList.contains('app--channel'));
+    if (inGrid) { if (rows.length === 3 && rows[1] > 0) L.h = rows[1]; }
+    else L.h = window.innerHeight - 100;   // the height the Channel rule above gives the stage
     // Into channel mode the chat panel is still at zero width (it grows with the site's animation), so the stage measures
     // full width: subtract the panel's final width.
     if (appEl.classList.contains('app--channel')) {
