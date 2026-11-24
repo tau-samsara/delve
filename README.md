@@ -155,10 +155,11 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)
 - Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens the audio panel; see [Audio tweaks](#audio-tweaks) above)
 - Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a small panel with Brightness and Contrast sliders, 50% to 150%; the video changes as you drag, in every view. Click elsewhere to close. The settings are remembered)
+- Hide options (the site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**. Comments hides the comment markers on the scrub bar and the comment pop-ups on the video; Reactions hides the reaction strip on the scrub bar; Both hides all of them. The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row)
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), and the feature switches. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), the Hide choice, and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
@@ -175,7 +176,6 @@ Ideas under consideration:
 
 - CRT display options (scanlines, bezels, stretch, crop, zoom)
 - More themes
-- Hide comments separately from reactions
 - A local "tape stack" for bookmarking programs, with personal notes
 - Hotkeys
 - Picture tweaks beyond brightness and contrast (saturation, dim, lights-out)

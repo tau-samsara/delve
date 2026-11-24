@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.33.3
+// @version      0.33.4
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -82,8 +82,11 @@
     night: false,         // night mode: loud sounds pulled down toward quiet ones
     level: false,         // loudness leveling: quiet channels lifted, loud ones trimmed
     levelTarget: -23,     // LUFS, LEVEL_RANGE
+    hideOn: false,        // HIDE button opens a popup: off, comments, reactions or both
+    hideMode: 'off',      // HIDE_MODES
   };
-  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock'], ['pictureOn', 'Picture tweaks'], ['audioOn', 'Audio tweaks']];
+  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock'], ['pictureOn', 'Picture tweaks'], ['audioOn', 'Audio tweaks'], ['hideOn', 'Hide options']];
+  const HIDE_MODES = [['off', 'Off'], ['both', 'Both'], ['comments', 'Comments'], ['reactions', 'Reactions']];
   const BOOST_RANGE = { min: 100, max: 300, step: 5 };
   const SYNC_RANGE = { min: -1000, max: 1000, step: 10 };   // ms
   const LEVEL_RANGE = { min: -30, max: -16, step: 1 };
@@ -119,6 +122,7 @@
         if (Number.isInteger(parsed.levelTarget) && parsed.levelTarget >= LEVEL_RANGE.min && parsed.levelTarget <= LEVEL_RANGE.max) out.levelTarget = parsed.levelTarget;
         if (typeof parsed.mono === 'boolean') out.mono = parsed.mono;
         if (MONO_SOURCES.some(([key]) => key === parsed.monoSource)) out.monoSource = parsed.monoSource;
+        if (HIDE_MODES.some(([key]) => key === parsed.hideMode)) out.hideMode = parsed.hideMode;
         if (Object.prototype.hasOwnProperty.call(SORTS, parsed.sort)) out.sort = parsed.sort;
       }
     } catch (e) { /* use defaults */ }
@@ -137,6 +141,7 @@
     applyLayout();
     applyPicture();
     applyAudio();
+    applyHide();
     syncDrawer();
   }
 
@@ -410,7 +415,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + PICTURE_CSS + AUDIO_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -2933,6 +2938,94 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
     }
     swapStreamIfNeeded(video);
   }
+  // ---------------------------------------------------------------------------
+  // Hide: Delve's popup on the site's HIDE button picks what to hide (comments, reactions, both or neither), all with CSS.
+  // The site's own HIDE state is kept off: when on, it also removes the reaction strip, so the two could not be told apart.
+  // ---------------------------------------------------------------------------
+  const HIDE_CSS = `
+html[data-delve-hide-comments] .comment-markers-sc, html[data-delve-hide-comments] .comment-seek-ticks, html[data-delve-hide-comments] .popup-comments { display: none; }
+html[data-delve-hide-reactions] .reaction-heat { display: none; }
+.delve-hide-panel[hidden] { display: none; }
+.delve-hide-ctl .delve-hide-panel { width: 340px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
+@media (max-width: 480px) { :root .delve-hide-ctl .delve-hide-panel { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); } }
+.delve-hide-panel .delve-seg { gap: 4px; }
+:root .delve-hide-panel .delve-seg button { padding-left: 2px; padding-right: 2px; letter-spacing: 0; font-size: 16px; }
+`;
+  const HIDE_BUTTON_SELECTOR = ':scope > .popup-toggle-btn:has(+ .comment-btn-wrap, + .delve-hide-ctl)';
+  const hidesComments = () => settings.hideMode === 'comments' || settings.hideMode === 'both';
+  const hidesReactions = () => settings.hideMode === 'reactions' || settings.hideMode === 'both';
+  let hidePanel = null;
+  let hideClickPassesThrough = false;
+  function applyHide() {
+    root.toggleAttribute('data-delve-hide-comments', settings.hideOn && hidesComments());
+    root.toggleAttribute('data-delve-hide-reactions', settings.hideOn && hidesReactions());
+    syncHidePanel();
+  }
+  function syncHidePanel() {
+    if (!hidePanel) return;
+    hidePanel.querySelectorAll('[data-hide-choice]').forEach(button => {
+      const on = button.dataset.hideChoice === settings.hideMode;
+      button.setAttribute('aria-pressed', String(on));
+      button.classList.toggle('popup-toggle-btn--on', on);
+    });
+  }
+  function buildHidePanel() {
+    hidePanel = document.createElement('div');
+    hidePanel.className = 'cc-panel delve-hide-panel';
+    hidePanel.hidden = true;
+    const head = document.createElement('div');
+    head.className = 'cc-panel-head';
+    head.append('Hide');
+    const choices = document.createElement('div');
+    choices.className = 'delve-seg';
+    HIDE_MODES.forEach(([key, name]) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'popup-toggle-btn'; button.dataset.hideChoice = key; button.textContent = name;
+      button.addEventListener('click', () => { setSettings({ hideMode: key }); ensureHide(); });
+      choices.append(button);
+    });
+    hidePanel.append(head, choices);
+    syncHidePanel();
+  }
+  function setHidePanelOpen(open) {
+    if (!hidePanel) return;
+    hidePanel.hidden = !open;
+    hidePanel.parentElement?.classList.toggle('subtitle-ctl--open', open);
+  }
+  const siteHideButton = () => document.querySelector('.app--watch .stage--watch .stage-volume-bar')?.querySelector(HIDE_BUTTON_SELECTOR);
+  document.addEventListener('click', e => {
+    const button = siteHideButton();
+    if (!settings.hideOn || !hidePanel || hideClickPassesThrough || !button || !button.contains(e.target)) return;
+    e.stopPropagation(); e.preventDefault();
+    setHidePanelOpen(hidePanel.hidden);
+  }, true);
+  document.addEventListener('mousedown', e => {
+    if (hidePanel && !hidePanel.hidden && !e.target.closest('.delve-hide-ctl') && !siteHideButton()?.contains(e.target)) setHidePanelOpen(false);
+  }, true);
+  function ensureHide() {
+    const stage = document.querySelector('.app--watch .stage--watch');
+    const bar = stage && stage.querySelector('.stage-volume-bar');
+    const siteButton = bar && bar.querySelector(HIDE_BUTTON_SELECTOR);
+    if (!settings.hideOn || !siteButton) {
+      if (settings.hideOn && stage) warnMissing('.stage-volume-bar HIDE button', 'Hide options');
+      setHidePanelOpen(false);
+      document.querySelector('.delve-hide-ctl')?.remove();
+      return;
+    }
+    if (!hidePanel) buildHidePanel();
+    let ctl = document.querySelector('.delve-hide-ctl');
+    if (!ctl) {
+      ctl = document.createElement('span');
+      ctl.className = 'subtitle-ctl delve-hide-ctl';
+      ctl.append(hidePanel);
+    }
+    if (ctl.previousElementSibling !== siteButton) siteButton.after(ctl);
+    if (siteButton.classList.contains('popup-toggle-btn--on')) {
+      hideClickPassesThrough = true;
+      siteButton.click();
+      hideClickPassesThrough = false;
+    }
+  }
   const THEATER_IDLE_MS = 3000;
   let theaterIdleTimer = 0;
   const inTheater = () => root.hasAttribute('data-delve-theater');
@@ -3109,6 +3202,7 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
       ensureTheater();
       ensurePicture();
       ensureAudio();
+      ensureHide();
       ensureClock24();
       ensureGuide();
     });
@@ -3116,6 +3210,7 @@ html[data-delve-picture] video { filter: brightness(var(--delve-brightness)) con
 
   applyLayout();
   applyPicture();
+  applyHide();
   if (document.head) applyStyle();
   else new MutationObserver((_, obs) => { if (document.head) { obs.disconnect(); applyStyle(); } }).observe(root, { childList: true });
   observer.observe(root, { childList: true, subtree: true });
