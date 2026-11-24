@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.1
+// @version      0.34.2
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -87,12 +87,12 @@
     watermarkOn: false,   // WATERMARK button: the channel logo shown over a corner of the picture
     watermarkShow: false, // the popup's On / Off
     watermarkSize: 8,     // percent of the picture height, WATERMARK_SLIDERS
-    watermarkOpacity: 50, // percent, WATERMARK_SLIDERS
+    watermarkOpacity: 10, // percent, WATERMARK_SLIDERS
     watermarkCorner: 'bottom-right',   // WATERMARK_CORNERS
     watermarkLogo: 'original',         // WATERMARK_LOGOS
   };
   const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock'], ['pictureOn', 'Picture tweaks'], ['audioOn', 'Audio tweaks'], ['hideOn', 'Hide options'], ['watermarkOn', 'Watermark']];
-  const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 10, max: 100, step: 5 }]];
+  const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
   const WATERMARK_LOGOS = [['original', 'Original'], ['contrast', 'B&W']];
   const HIDE_MODES = [['off', 'Off'], ['both', 'Both'], ['comments', 'Comments'], ['reactions', 'Reactions']];
@@ -133,6 +133,8 @@
         if (MONO_SOURCES.some(([key]) => key === parsed.monoSource)) out.monoSource = parsed.monoSource;
         if (HIDE_MODES.some(([key]) => key === parsed.hideMode)) out.hideMode = parsed.hideMode;
         if (typeof parsed.watermarkShow === 'boolean') out.watermarkShow = parsed.watermarkShow;
+        // 0.34.0 and 0.34.1 allowed 10-100; a saved value above the new maximum becomes the maximum
+        if (Number.isInteger(parsed.watermarkOpacity) && parsed.watermarkOpacity > 20 && parsed.watermarkOpacity <= 100) parsed.watermarkOpacity = 20;
         WATERMARK_SLIDERS.forEach(([key, , range]) => {
           if (Number.isInteger(parsed[key]) && parsed[key] >= range.min && parsed[key] <= range.max) out[key] = parsed[key];
         });
