@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.36.1 - 2026-11-24
+- Extended guide: the toolbar shows how much of the schedule is loaded, for example "Mon 9:00 PM – Wed 9:00 PM", and the label grows as more days load.
+
 ## 0.36.0 - 2026-11-24
 - Added What's new: a button in the menu footer opens this changelog in a popup.
 

@@ -101,6 +101,7 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 - Starts with 12 hours on each side of now. Scroll toward either end and it loads another 24 hours, up to 2 days each way.
 - Programs that already ended are dimmed. The program playing now is highlighted in yellow.
 - At midnight the time row shows the day and date (for example `SUN 11/22`).
+- A label on the toolbar shows how much is loaded, for example `Mon 9:00 PM – Wed 9:00 PM`, and grows as more loads.
 - **Window** (− / +) on the toolbar sets how much time fits on screen: 30 minutes, 1, 3, 6 or 12 hours.
 - **Now** jumps back to the present.
 - Click and drag to scroll the guide, or use the mouse wheel or trackpad.

@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.36.0
+// @version      0.36.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1548,7 +1548,10 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     const zi = ZOOMS.indexOf(settings.zoom);
     if (zoomLbl.textContent !== zoomText(settings.zoom)) zoomLbl.textContent = zoomText(settings.zoom);
     zoomOut.disabled = zi <= 0; zoomIn.disabled = zi >= ZOOMS.length - 1;
-    const note = settings.extended && wide.status === 'failed' ? 'Wider view is unavailable (the site changed or did not answer).' : '';
+    const dayAndTime = ms => { const d = new Date(ms); return d.toLocaleDateString([], { weekday: 'short' }) + ' ' + fmtTime(d); };
+    let note = '';
+    if (settings.extended && wide.status === 'failed') note = 'Wider view is unavailable (the site changed or did not answer).';
+    else if (settings.extended && wide.status === 'ready') note = dayAndTime(wide.from) + ' – ' + dayAndTime(wide.to);
     if (wideNote.textContent !== note) wideNote.textContent = note;
   }
 
