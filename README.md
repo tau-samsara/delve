@@ -19,7 +19,7 @@ It uses the site's own fonts, colors and buttons, so it looks like part of the s
 
 Installing from that link also turns on automatic updates: Tampermonkey checks for new versions on its own (daily by default). If you pasted the script in by hand instead, it won't update itself.
 
-The script only runs on `spelunkr.tv`. It makes these outside requests: to `data.spelunkr.tv`, the site's own data host, to look up program descriptions; to `raw.githubusercontent.com`, about once an hour, to read the published version number; and, only with Audio tweaks on, to `archive.org`, where the streams live. Audio tweaks also loads the MP4Box library from `cdn.jsdelivr.net` (pinned to one version and checked against a hash by Tampermonkey).
+The script only runs on `spelunkr.tv`. It makes these outside requests: to `data.spelunkr.tv`, the site's own data host, to look up program descriptions; to `raw.githubusercontent.com`, about once an hour, to read the published version number, and again to read the changelog when you open **What's new**; and, only with Audio tweaks on, to `archive.org`, where the streams live. Audio tweaks also loads the MP4Box library from `cdn.jsdelivr.net` (pinned to one version and checked against a hash by Tampermonkey).
 
 ## Opening the menu
 
@@ -148,6 +148,8 @@ All of these are remembered, and they apply to every channel: Delve does not res
 ### Updates
 
 About once an hour Delve reads the version number of the published script on GitHub. When a newer one exists, the DELVE button pulses with a gold glow. The bottom of the menu shows the installed version and a button. When an update is available it reads **Update Available** (gold) and opens the script so Tampermonkey can install it; otherwise it reads **Check for Updates** and checks GitHub right away.
+
+**What's new** (below the update button) opens a popup with the changelog: what changed in each version, newest first. It is read from `CHANGELOG.md` on GitHub when you open it, so it also lists versions you haven't installed yet. The same file is in the repository.
 
 ### Turning features on
 
