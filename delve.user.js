@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.38.0
+// @version      0.38.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -106,6 +106,7 @@
     volumePopup: false,   // volume slider popup on the guide's mute button
     autoSpelunkOn: false, // AUTO button beside SPELUNK: tunes a random channel on a timer
     autoSpelunkSeconds: 0,   // AUTO_SPELUNK_INTERVALS; 0 is off
+    spelunkFavoritesOnly: false,   // in the AUTO popup: SPELUNK and the timer pick only starred channels
   };
   const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
   const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player'], ['autoSpelunkOn', 'Auto spelunk', 'player']];
@@ -165,6 +166,7 @@
         if (typeof parsed.mono === 'boolean') out.mono = parsed.mono;
         if (MONO_SOURCES.some(([key]) => key === parsed.monoSource)) out.monoSource = parsed.monoSource;
         if (HIDE_MODES.some(([key]) => key === parsed.hideMode)) out.hideMode = parsed.hideMode;
+        if (typeof parsed.spelunkFavoritesOnly === 'boolean') out.spelunkFavoritesOnly = parsed.spelunkFavoritesOnly;
         if (AUTO_SPELUNK_INTERVALS.some(([seconds]) => seconds === parsed.autoSpelunkSeconds)) out.autoSpelunkSeconds = parsed.autoSpelunkSeconds;
         if (typeof parsed.watermarkShow === 'boolean') out.watermarkShow = parsed.watermarkShow;
         // 0.34.0 and 0.34.1 allowed 10-100; a saved value above the new maximum becomes the maximum
@@ -3386,7 +3388,8 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
   // ---------------------------------------------------------------------------
   const AUTO_SPELUNK_CSS = `
 .stage-dvr-bar:has(.delve-auto-ctl.subtitle-ctl--open) { overflow: visible; }
-.delve-auto-panel[hidden] { display: none; }
+.delve-auto-panel[hidden], .delve-auto-favorites[hidden] { display: none; }
+.delve-auto-favorites { display: contents; }
 .delve-auto-ctl .delve-auto-panel { width: 300px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
 @media (max-width: 480px) { :root .delve-auto-ctl .delve-auto-panel { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); } }
 .delve-auto-panel .delve-seg { gap: 4px; }
@@ -3407,6 +3410,13 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       choice.setAttribute('aria-pressed', String(on));
       choice.classList.toggle('popup-toggle-btn--on', on);
     });
+    const favoritesRow = autoSpelunkPanel?.querySelector('.delve-auto-favorites');
+    if (favoritesRow) favoritesRow.hidden = !settings.favoritesOn;
+    autoSpelunkPanel?.querySelectorAll('[data-spelunk-favorites]').forEach(choice => {
+      const on = (choice.dataset.spelunkFavorites === 'true') === settings.spelunkFavoritesOnly;
+      choice.setAttribute('aria-pressed', String(on));
+      choice.classList.toggle('popup-toggle-btn--on', on);
+    });
   }
   function buildAutoSpelunkPanel() {
     autoSpelunkPanel = document.createElement('div');
@@ -3423,7 +3433,21 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       choice.addEventListener('click', () => { autoSpelunkSecondsLeft = seconds; setSettings({ autoSpelunkSeconds: seconds }); syncAutoSpelunk(); });
       choices.append(choice);
     });
-    autoSpelunkPanel.append(head, choices);
+    const channelsHead = document.createElement('div');
+    channelsHead.className = 'cc-panel-head';
+    channelsHead.append('Spelunk among');
+    const channelChoices = document.createElement('div');
+    channelChoices.className = 'delve-seg';
+    [[false, 'All channels'], [true, '★ Favorites']].forEach(([favoritesOnly, name]) => {
+      const choice = document.createElement('button');
+      choice.type = 'button'; choice.className = 'popup-toggle-btn'; choice.dataset.spelunkFavorites = favoritesOnly; choice.textContent = name;
+      choice.addEventListener('click', () => { setSettings({ spelunkFavoritesOnly: favoritesOnly }); syncAutoSpelunk(); });
+      channelChoices.append(choice);
+    });
+    const favoritesRow = document.createElement('div');
+    favoritesRow.className = 'delve-auto-favorites';
+    favoritesRow.append(channelsHead, channelChoices);
+    autoSpelunkPanel.append(head, choices, favoritesRow);
   }
   function setAutoSpelunkPanelOpen(open) {
     if (!autoSpelunkPanel) return;
@@ -3433,8 +3457,22 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
   document.addEventListener('mousedown', e => {
     if (autoSpelunkPanel && !autoSpelunkPanel.hidden && !e.target.closest('.delve-auto-ctl')) setAutoSpelunkPanelOpen(false);
   }, true);
+  function randomFavoriteChannel() {
+    const currentChannel = location.pathname.split('/')[1];
+    const others = settings.favorites.filter(channel => channel !== currentChannel);
+    return others[Math.floor(Math.random() * others.length)];
+  }
+  const tuneChannel = channel => {
+    history.pushState(null, '', '/' + channel);
+    window.dispatchEvent(new PopStateEvent('popstate'));   // the site's router follows popstate
+  };
   document.addEventListener('click', e => {
-    if (e.target.closest(SPELUNK_BUTTON_SELECTOR)) autoSpelunkSecondsLeft = settings.autoSpelunkSeconds;   // a manual jump restarts the countdown
+    if (!e.target.closest(SPELUNK_BUTTON_SELECTOR)) return;
+    autoSpelunkSecondsLeft = settings.autoSpelunkSeconds;   // a manual jump restarts the countdown
+    const favorite = settings.autoSpelunkOn && settings.favoritesOn && settings.spelunkFavoritesOnly && randomFavoriteChannel();
+    if (!favorite) return;   // with no other favorite the site's own random jump runs
+    e.stopPropagation(); e.preventDefault();
+    tuneChannel(favorite);
   }, true);
   setInterval(() => {
     const spelunkButton = settings.autoSpelunkOn && settings.autoSpelunkSeconds && document.querySelector(SPELUNK_BUTTON_SELECTOR);

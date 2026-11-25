@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.38.1 - 2026-11-25
+- Auto spelunk: the AUTO popup has a new Spelunk among row, All channels or ★ Favorites. With Favorites, SPELUNK and the timer jump to a random starred channel other than the one you are on. The row only shows while the Favorites switch is on.
+
 ## 0.38.0 - 2026-11-25
 - Added Auto spelunk (Player switch, off by default): an AUTO button next to SPELUNK opens a popup to pick Off, 15 s, 30 s, 1 min or 5 min. Delve then presses SPELUNK for you each time the countdown on the AUTO button reaches zero, and pressing SPELUNK yourself restarts the countdown.
 

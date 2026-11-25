@@ -182,11 +182,11 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 ![The WATERMARK popup, with the logo at the top left of the picture](images/watermark-popup.png)
 
 - Volume slider (in the guide's compact player the site shows no volume slider. With this on, hovering the mute button opens a small volume slider above it, and it closes when the pointer leaves. Moving the slider changes the volume only; it does not mute or unmute)
-- Auto spelunk (an AUTO button next to the site's SPELUNK button opens a popup: **Off**, **15 s**, **30 s**, **1 min** or **5 min**. Pick an interval and Delve presses SPELUNK for you each time the countdown shown on the AUTO button reaches zero, so you land on a new random channel. Pressing SPELUNK yourself restarts the countdown. The chosen interval is remembered, so auto spelunk carries on after you reload)
+- Auto spelunk (an AUTO button next to the site's SPELUNK button opens a popup: **Off**, **15 s**, **30 s**, **1 min** or **5 min**. Pick an interval and Delve presses SPELUNK for you each time the countdown shown on the AUTO button reaches zero, so you land on a new random channel. Pressing SPELUNK yourself restarts the countdown. The chosen interval is remembered, so auto spelunk carries on after you reload. The popup's **Spelunk among** row switches between **All channels** and **★ Favorites**: with Favorites, both SPELUNK and the timer jump to a random starred channel other than the one you are on. The row only shows while the Favorites switch is on; with Favorites off, SPELUNK and the timer never pick from your stars. If you have no other starred channel, SPELUNK does its usual random jump)
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, the auto spelunk interval, and the feature switches. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, the auto spelunk interval and its All channels / Favorites choice, and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
@@ -205,7 +205,6 @@ Ideas under consideration:
 - More themes
 - A local "tape stack" for bookmarking programs, with personal notes
 - Hotkeys
-- "Spelunk my favorites" (a random jump limited to starred channels)
 - A test pattern screen when a stream fails
 - Start times, past blocks and "late night" labels in the guide
 - A close button or minimal chrome on desktop
