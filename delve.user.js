@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.5
+// @version      0.34.6
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -57,6 +57,7 @@
   const DEFAULTS = {
     layout: 'default',   // guide arrangement
     splitSide: 'left',   // side the video takes in every layout
+    drawerClosed: [],    // drawer groups folded shut, DRAWER_GROUPS keys
     favorites: [],       // starred channel ids
     favOnly: false,      // show only favorite channels
     sort: 'dial',        // 'dial' | 'name' | 'viewers' | 'favorites'
@@ -100,7 +101,8 @@
     watermarkCorner: 'bottom-right',   // WATERMARK_CORNERS
     watermarkLogo: 'original',         // WATERMARK_LOGOS
   };
-  const FEATURES = [['programInfo', 'Program information'], ['favoritesOn', 'Favorites'], ['sortOn', 'Sort'], ['searchOn', 'Search'], ['extended', 'Extended guide'], ['theater', 'Theater mode'], ['clock24', '24-hour clock'], ['pictureOn', 'Picture tweaks'], ['audioOn', 'Audio tweaks'], ['hideOn', 'Hide options'], ['watermarkOn', 'Watermark']];
+  const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
+  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player']];
   const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
   const WATERMARK_LOGOS = [['original', 'Original'], ['contrast', 'B&W']];
@@ -134,6 +136,7 @@
       if (parsed && typeof parsed === 'object') {
         if (LAYOUTS.indexOf(parsed.layout) !== -1) out.layout = parsed.layout;
         if (SIDES.indexOf(parsed.splitSide) !== -1) out.splitSide = parsed.splitSide;
+        if (Array.isArray(parsed.drawerClosed)) out.drawerClosed = DRAWER_GROUPS.map(g => g[0]).filter(key => parsed.drawerClosed.includes(key));
         if (Array.isArray(parsed.favorites)) out.favorites = parsed.favorites.filter(x => typeof x === 'string');
         if (typeof parsed.favOnly === 'boolean') out.favOnly = parsed.favOnly;
         if (ZOOMS.indexOf(parsed.zoom) !== -1) out.zoom = parsed.zoom;
@@ -395,25 +398,33 @@ html[data-delve-side="right"][data-delve-layout="split"] .app--watch:not(.app--c
 .delve-scrim.open { display: block; }
 .delve-drawer {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 2147483001; box-sizing: border-box;
-  width: min(340px, 100vw); overflow-y: auto; padding: var(--space-4, 16px);
-  background: var(--bg-panel, #0d1238); color: var(--text, #e8eaf0);
-  border-left: var(--border-width, 3px) solid var(--border-bold, #4a5aaa);
+  width: min(340px, 100vw); display: flex; flex-direction: column;
+  background: var(--bg-deep, #060b1e); color: var(--text, #e8eaf0);
+  border-left: 1px solid var(--border-color, rgb(38, 82, 178));
   font-family: var(--font-mono, "Courier New", monospace); font-size: 14px; line-height: 1.4;
   transform: translateX(100%); visibility: hidden; transition: transform .2s ease, visibility 0s linear .2s;
 }
+/* Only the left edge shows the ring: the other three are pushed 5 px past the window (ring 4 px + outline 1 px). */
+html.theme-8s .delve-drawer { top: -5px; right: -5px; bottom: -5px; width: min(345px, calc(100vw + 5px)); padding: 5px 5px 5px 0; background: var(--8s-box); border: 0; box-shadow: var(--8s-ring-thin), 0 0 0 1px #141414; }
 .delve-drawer.open { transform: none; visibility: visible; transition: transform .2s ease; }
-.delve-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4, 16px); }
+.delve-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4, 16px); }
 .delve-title { margin: 0; font-size: 20px; letter-spacing: .08em; color: var(--gold, #ffd740); }
-.delve-row { margin: 0 0 var(--space-4, 16px); }
-.delve-label { display: block; margin-bottom: var(--space-2, 8px); color: var(--cyan, #00ccdd); letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
+.delve-scroll { flex: 1 1 auto; overflow-y: auto; padding: 0 var(--space-4, 16px); }
+.delve-group-head { display: flex; align-items: center; justify-content: space-between; width: 100%; margin: var(--space-3, 12px) 0 var(--space-2, 8px); padding: 0 0 4px; background: none; border: 0; border-bottom: 1px solid var(--border-color, rgb(38, 82, 178)); color: var(--gold, #ffd740); font: inherit; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.delve-group-head .desc-toggle-arrow { color: #fff; }
+.delve-group-head[aria-expanded="true"] .desc-toggle-arrow { color: var(--8s-yellow, #ffd740); }
+.delve-group-head[aria-expanded="true"] .desc-toggle-arrow svg { transform: rotate(180deg); }
+.delve-group-head:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
+.delve-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3, 12px); margin: 0 0 var(--space-2, 8px); }
+.delve-label { flex: 1 1 auto; color: var(--cyan, #00ccdd); letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
 /* Buttons and the drop-down reuse the site's button classes (bbtn bbtn-outline / bbtn-gold). */
 .delve-close { min-height: 30px; padding: 0 10px; }
-.delve-select { display: block; width: 100%; box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 10px; line-height: normal; text-align: left; color-scheme: dark; }
+.delve-select { display: block; flex: 0 0 200px; width: 200px; box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 10px; line-height: normal; text-align: left; color-scheme: dark; }
 .delve-select option { color: #fff; background: var(--bg-deep, #060b1e); }
-.delve-seg { display: flex; gap: var(--space-2, 8px); }
+.delve-seg { display: flex; flex: 0 0 200px; gap: var(--space-2, 8px); }
 /* Left/Right use the site's toggle buttons: grey when off, blue with gold text when on (popup-toggle-btn--on). */
 .delve-seg button, .delve-toggle { flex: 1 1 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
-.delve-toggle { display: block; width: 100%; }
+.delve-toggle { display: block; flex: 0 0 96px; width: 96px; }
 .delve-select:focus-visible, .delve-seg button:focus-visible, .delve-toggle:focus-visible, .delve-close:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
 .header-nav-delve { cursor: pointer; }
 /* A newer version is published: the DELVE button pulses with a gold glow. */
@@ -425,10 +436,11 @@ html[data-delve-update] [data-delve-btn] { border-color: var(--gold, #ffd740); a
 @media (prefers-reduced-motion: reduce) {
   html[data-delve-update] [data-delve-btn] { animation: none; box-shadow: 0 0 8px 2px var(--gold, #ffd740); }
 }
-.delve-footer { margin-top: calc(var(--space-4, 16px) * 1.5); padding-top: var(--space-4, 16px); border-top: 1px solid var(--border-color, rgb(38, 82, 178)); }
+.delve-footer { padding: var(--space-4, 16px); border-top: 1px solid var(--border-color, rgb(38, 82, 178)); }
 .delve-update-status { display: block; margin-bottom: var(--space-3, 12px); font-size: 12px; }
 .delve-update-btn { display: block; box-sizing: border-box; width: 100%; text-align: center; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-.delve-update-btn:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
+.delve-reset-btn { display: block; box-sizing: border-box; width: 100%; margin-top: var(--space-3, 12px); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
+.delve-reset-btn:focus-visible, .delve-update-btn:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
 /* The site orders header items with flex "order" (clock last), so give the button the highest. */
 html .prevue-header-bar > .header-nav-item.header-nav-delve { order: 99; margin-left: var(--space-2, 8px); }
 /* Phone: DELVE sits by the menu button; tighten the header so the clock stays on screen (B2). */
@@ -483,6 +495,9 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
   }
 
   let drawer = null, scrim = null, lastFocus = null;
+  const RESET_LABEL = 'Reset all settings';
+  // The site's expander chevron (as on the program description toggle), wrapped in its arrow button class.
+  const GROUP_ARROW = '<span class="desc-toggle-arrow" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z" fill-rule="evenodd" clip-rule="evenodd"/></svg></span>';
 
   function buildDrawer() {
     scrim = document.createElement('div');
@@ -549,7 +564,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     sideRow.append(sideLabel, seg);
 
     // Feature switches: one toggle each
-    const featRows = FEATURES.map(([key, name]) => {
+    const featRows = FEATURES.map(([key, name, group]) => {
       const row = document.createElement('div');
       row.className = 'delve-row';
       const label = document.createElement('span');
@@ -571,7 +586,29 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
         ensureClock24();
       });
       row.append(label, b);
+      row.dataset.group = group;
       return row;
+    });
+    viewRow.dataset.group = sideRow.dataset.group = 'layout';
+
+    const scroll = document.createElement('div');
+    scroll.className = 'delve-scroll';
+    DRAWER_GROUPS.forEach(([key, name]) => {
+      const heading = document.createElement('button');
+      heading.type = 'button';
+      heading.className = 'delve-group-head';
+      heading.dataset.group = key;
+      heading.textContent = name;
+      heading.insertAdjacentHTML('beforeend', GROUP_ARROW);
+      heading.addEventListener('click', () => {
+        const closed = settings.drawerClosed.includes(key);
+        setSettings({ drawerClosed: closed ? settings.drawerClosed.filter(k => k !== key) : settings.drawerClosed.concat(key) });
+      });
+      const body = document.createElement('div');
+      body.className = 'delve-group-body';
+      body.dataset.group = key;
+      body.append(...[viewRow, sideRow, ...featRows].filter(row => row.dataset.group === key));
+      scroll.append(heading, body);
     });
 
     const footer = document.createElement('div');
@@ -586,15 +623,41 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
       e.preventDefault();
       checkForUpdate(true);
     });
-    footer.append(updateStatus, updateBtn);
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'delve-reset-btn bbtn bbtn-outline';
+    resetBtn.textContent = RESET_LABEL;
+    let resetTimer = 0;
+    resetBtn.addEventListener('click', () => {
+      clearTimeout(resetTimer);
+      if (resetBtn.textContent === RESET_LABEL) {
+        resetBtn.textContent = 'Click again to confirm';
+        resetTimer = setTimeout(() => { resetBtn.textContent = RESET_LABEL; }, 4000);
+        return;
+      }
+      resetBtn.textContent = RESET_LABEL;
+      setSettings(JSON.parse(JSON.stringify(DEFAULTS)));
+      if (progState) closePanel();
+      ensureGuide();
+      ensureTheater();
+      ensurePicture();
+      ensureAudio();
+      ensureClock24();
+    });
+    footer.append(updateStatus, updateBtn, resetBtn);
 
-    drawer.append(head, viewRow, sideRow, ...featRows, footer);
+    drawer.append(head, scroll, footer);
     root.append(scrim, drawer);
   }
 
   function syncDrawer() {
     if (!drawer) return;
     drawer.querySelector('#delve-view').value = settings.layout;
+    drawer.querySelectorAll('.delve-group-head').forEach(h => {
+      const open = !settings.drawerClosed.includes(h.dataset.group);
+      h.setAttribute('aria-expanded', String(open));
+      drawer.querySelector('.delve-group-body[data-group="' + h.dataset.group + '"]').hidden = !open;
+    });
     drawer.querySelectorAll('.delve-seg button').forEach(b => {
       const on = b.dataset.side === settings.splitSide;
       b.setAttribute('aria-pressed', String(on));

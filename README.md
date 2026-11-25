@@ -25,6 +25,8 @@ The script only runs on `spelunkr.tv`. It makes these outside requests: to `data
 
 Click **DELVE** in the top bar (at the far right, after the clock). It's on every page of the site; on the landing page it sits with the Directory, About and Updates links. A drawer slides in from the right. Click anywhere outside it, or the **✕**, to close it. The drawer also closes when you go to another page.
 
+The drawer has three groups: **Layout**, **Guide** and **Player**. Click a group's arrow to fold or unfold it; the drawer remembers which are folded. The title and the footer stay in place while the list scrolls. **Reset all settings** in the footer puts every setting back to its default, including your favorites and remembered volume; click it twice to confirm.
+
 ![The DELVE drawer](images/drawer.png)
 
 ## Features
