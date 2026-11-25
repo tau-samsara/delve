@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.7
+// @version      0.34.8
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -419,9 +419,11 @@ html.theme-8s .delve-drawer { top: -5px; right: -5px; bottom: -5px; width: min(3
 .delve-label { flex: 1 1 auto; color: var(--cyan, #00ccdd); letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
 /* Buttons and the drop-down reuse the site's button classes (bbtn bbtn-outline / bbtn-gold). */
 .delve-close { min-height: 30px; padding: 0 10px; }
-.delve-select { display: block; flex: 0 0 200px; width: 200px; box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 10px; line-height: normal; text-align: left; color-scheme: dark; }
+.delve-select { display: block; box-sizing: border-box; height: 36px; min-height: 36px; padding: 0 10px; line-height: normal; text-align: left; color-scheme: dark; }
+.delve-drawer .delve-select { flex: 0 0 200px; width: 200px; }
 .delve-select option { color: #fff; background: var(--bg-deep, #060b1e); }
-.delve-seg { display: flex; flex: 0 0 200px; gap: var(--space-2, 8px); }
+.delve-seg { display: flex; gap: var(--space-2, 8px); }
+.delve-drawer .delve-seg { flex: 0 0 200px; }
 /* Left/Right use the site's toggle buttons: grey when off, blue with gold text when on (popup-toggle-btn--on). */
 .delve-seg button, .delve-toggle { flex: 1 1 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
 .delve-toggle { display: block; flex: 0 0 96px; width: 96px; }
