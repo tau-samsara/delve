@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.8
+// @version      0.34.9
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -90,6 +90,7 @@
     monoSource: 'mix',    // MONO_SOURCES
     syncMs: 0,            // audio earlier (-) or later (+) than the video, SYNC_RANGE
     night: false,         // night mode: loud sounds pulled down toward quiet ones
+    hiss: false,          // hiss reduction: highs above 6 kHz turned down
     level: false,         // loudness leveling: quiet channels lifted, loud ones trimmed
     levelTarget: -23,     // LUFS, LEVEL_RANGE
     hideOn: false,        // HIDE button opens a popup: off, comments, reactions or both
@@ -152,6 +153,7 @@
         if (Number.isFinite(parsed.boost) && parsed.boost >= BOOST_RANGE.min && parsed.boost <= BOOST_RANGE.max) out.boost = parsed.boost;
         if (Number.isInteger(parsed.syncMs) && parsed.syncMs >= SYNC_RANGE.min && parsed.syncMs <= SYNC_RANGE.max) out.syncMs = parsed.syncMs;
         if (typeof parsed.night === 'boolean') out.night = parsed.night;
+        if (typeof parsed.hiss === 'boolean') out.hiss = parsed.hiss;
         if (typeof parsed.level === 'boolean') out.level = parsed.level;
         if (Number.isInteger(parsed.levelTarget) && parsed.levelTarget >= LEVEL_RANGE.min && parsed.levelTarget <= LEVEL_RANGE.max) out.levelTarget = parsed.levelTarget;
         if (typeof parsed.mono === 'boolean') out.mono = parsed.mono;
@@ -2525,6 +2527,8 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
   let resyncAudioStream = () => {};   // re-applies the audio sync setting to the running stream
   const audioWatchedVideos = new WeakSet();
 
+  const HISS_SHELF_HZ = 6000, HISS_CUT_DB = -6;
+
   function ensureAudioGraph(video) {
     if (audioGraph) return;
     const context = new AudioContext();
@@ -2541,7 +2545,9 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
     const nightCompressor = context.createDynamicsCompressor();
     nightCompressor.threshold.value = -30; nightCompressor.knee.value = 20; nightCompressor.ratio.value = 6;
     nightCompressor.attack.value = 0.01; nightCompressor.release.value = 0.25;
-    gain.connect(context.destination);
+    const hissShelf = context.createBiquadFilter();   // 0 dB (transparent) until hiss reduction is on
+    hissShelf.type = 'highshelf'; hissShelf.frequency.value = HISS_SHELF_HZ;
+    gain.connect(hissShelf); hissShelf.connect(context.destination);
     const weightHighpass = context.createBiquadFilter(), weightShelf = context.createBiquadFilter();   // K-weighting for LUFS
     weightHighpass.type = 'highpass'; weightHighpass.frequency.value = 38.13; weightHighpass.Q.value = -6;
     weightShelf.type = 'highshelf'; weightShelf.frequency.value = 1681.97; weightShelf.gain.value = 4;
@@ -2553,7 +2559,7 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
     ['pointerdown', 'keydown'].forEach(type => document.addEventListener(type, resume, true));
     video.addEventListener('play', resume);
     audioGraph = {
-      context, video, gain, monoBus, levelGain, fade, nightCompressor, weightHighpass, meterLeft, meterRight,
+      context, video, gain, hissShelf, monoBus, levelGain, fade, nightCompressor, weightHighpass, meterLeft, meterRight,
       meterBufferLeft: new Float32Array(4096), meterBufferRight: new Float32Array(4096),
       source: context.createMediaElementSource(video), splitter: context.createChannelSplitter(2), route: '', leveling: false, night: false,
     };
@@ -2573,17 +2579,18 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
     else { graph.source.connect(graph.splitter); graph.splitter.connect(graph.monoBus, route === 'left' ? 0 : 1); }
   }
 
-  // Boost gain -> night compressor (if on) -> leveling (if on) -> output.
+  // Boost gain -> hiss shelf -> night compressor (if on) -> leveling (if on) -> output.
   function routeOutput() {
     const graph = audioGraph;
+    graph.hissShelf.gain.setTargetAtTime(settings.audioOn && settings.hiss ? HISS_CUT_DB : 0, graph.context.currentTime, 0.01);
     const leveling = settings.audioOn && settings.level, night = settings.audioOn && settings.night;
     if (leveling === graph.leveling && night === graph.night) return;
     const levelingChanged = leveling !== graph.leveling;
     graph.leveling = leveling; graph.night = night;
-    graph.gain.disconnect(); graph.nightCompressor.disconnect();
+    graph.hissShelf.disconnect(); graph.nightCompressor.disconnect();
     const next = leveling ? graph.levelGain : graph.context.destination;
-    if (night) { graph.gain.connect(graph.nightCompressor); graph.nightCompressor.connect(next); }
-    else graph.gain.connect(next);
+    if (night) { graph.hissShelf.connect(graph.nightCompressor); graph.nightCompressor.connect(next); }
+    else graph.hissShelf.connect(next);
     if (levelingChanged) resetLeveler();
   }
 
@@ -2599,7 +2606,7 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
   // Loudness leveling, from the user's stream-swap script: measures the short-term loudness (LUFS) of the source and moves
   // levelGain toward the target, cutting fast and lifting slowly. Quiet passages hold the gain.
   const LEVEL_TICK_MS = 100, LEVEL_SHORT_TICKS = 30, LEVEL_SHORT_MIN_TICKS = 10, LEVEL_MOMENTARY_TICKS = 4;
-  const LEVEL_GATE_LUFS = -70, LEVEL_HOLD_LUFS = -65, LEVEL_BOOST_MAX_DB = 15, LEVEL_CUT_MAX_DB = -12;
+  const LEVEL_GATE_LUFS = -70, LEVEL_HOLD_LUFS = -45, LEVEL_BOOST_MAX_DB = 15, LEVEL_CUT_MAX_DB = -12;
   const LEVEL_TAU_CUT = 0.8, LEVEL_TAU_LIFT = 4, LEVEL_TAU_SETTLE = 1, LEVEL_SETTLE_MS = 6000, LEVEL_MIN_VOLUME = 0.02, LEVEL_FADE_SEC = 1;
   const LUFS_OFFSET = -0.43;
   const lufsToPower = lufs => Math.pow(10, (lufs - LUFS_OFFSET) / 10);
@@ -2973,6 +2980,10 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
     nightToggle.textContent = settings.night ? 'On' : 'Off';
     nightToggle.setAttribute('aria-pressed', String(settings.night));
     nightToggle.classList.toggle('popup-toggle-btn--on', settings.night);
+    const hissToggle = audioPanel.querySelector('[data-audio-hiss]');
+    hissToggle.textContent = settings.hiss ? 'On' : 'Off';
+    hissToggle.setAttribute('aria-pressed', String(settings.hiss));
+    hissToggle.classList.toggle('popup-toggle-btn--on', settings.hiss);
     const syncSlider = audioPanel.querySelector('input[data-sync]');
     syncSlider.value = settings.syncMs;
     syncSlider.style.setProperty('--volume-pct', (settings.syncMs - SYNC_RANGE.min) / (SYNC_RANGE.max - SYNC_RANGE.min) * 100 + '%');
@@ -3051,7 +3062,13 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
     nightToggle.type = 'button'; nightToggle.className = 'popup-toggle-btn'; nightToggle.dataset.audioNight = '';
     nightToggle.addEventListener('click', () => setSettings({ night: !settings.night }));
     nightHead.append('Night mode', nightToggle);
-    audioPanel.append(label, slider, levelHead, targetLabel, targetSlider, nightHead, monoHead, monoChoices, syncLabel, syncSlider);
+    const hissHead = document.createElement('div');
+    hissHead.className = 'cc-panel-head';
+    const hissToggle = document.createElement('button');
+    hissToggle.type = 'button'; hissToggle.className = 'popup-toggle-btn'; hissToggle.dataset.audioHiss = '';
+    hissToggle.addEventListener('click', () => setSettings({ hiss: !settings.hiss }));
+    hissHead.append('Hiss reduction', hissToggle);
+    audioPanel.append(label, slider, levelHead, targetLabel, targetSlider, nightHead, hissHead, monoHead, monoChoices, syncLabel, syncSlider);
     syncAudioPanel();
   }
   function setAudioPanelOpen(open) {

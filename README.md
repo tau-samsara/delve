@@ -1,6 +1,6 @@
 # Delve
 
-Quality-of-life tools for [Spelunkr](https://spelunkr.tv/). Delve is a userscript that adds a few things the site doesn't have yet: more ways to lay out the guide, program info on click, favorites, sorting, a scrollable multi-day guide, a remembered volume, and audio tweaks (volume boost, leveling, night mode, mono and sync).
+Quality-of-life tools for [Spelunkr](https://spelunkr.tv/). Delve is a userscript that adds a few things the site doesn't have yet: more ways to lay out the guide, program info on click, favorites, sorting, a scrollable multi-day guide, a remembered volume, and audio tweaks (volume boost, leveling, night mode, hiss reduction, mono and sync).
 
 It uses the site's own fonts, colors and buttons, so it looks like part of the site.
 
@@ -124,6 +124,7 @@ Switch on **Audio tweaks** in the drawer. An **AUDIO** button appears just left 
 | **Volume boost** | A slider from 100% to 300%, for channels that play too quietly. |
 | **Leveling** and **Target loudness** | Evens out the volume: quiet channels are lifted and loud ones trimmed toward the target (-30 to -16 LUFS, -23 by default), with a limiter to prevent clipping. The sound fades in when you change channel. |
 | **Night mode** | Compresses the sound: loud moments are pulled down toward the quiet ones, so you can keep the volume low without losing the dialogue. |
+| **Hiss reduction** | Turns the highs above 6 kHz down by 6 dB, which softens tape and stream hiss. It also makes everything sound a little duller. |
 | **Mono** | A row of five choices: **Off**, **Auto**, **Left**, **Mix**, **Right**. Left or Right plays that channel in both ears and Mix plays both mixed (at half level), for files with sound in one ear only. |
 | **Audio sync** | -1000 to +1000 ms. Minus plays the sound earlier, plus later, for sources whose sound is out of step with the picture. Moving it reloads the buffer, so the video stalls for a second. |
 
@@ -177,7 +178,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, and the feature switches. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
