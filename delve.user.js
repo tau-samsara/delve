@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.35.0
+// @version      0.35.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2386,17 +2386,17 @@ html[data-delve-pan] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   document.addEventListener('volumechange', () => { if (document.getElementById('delve-mute')) ensureMute(); }, true);   // media events do not bubble: capture
 
   // ---------------------------------------------------------------------------
-  // Theater mode. Watch and channel mode: the video fills the window with nothing else on the page. Not saved; ends when
-  // the page changes or the feature is switched off.
+  // Theater mode. Watch and channel mode: the video fills the window with nothing else on the page. Not saved; stays on when
+  // the channel changes; ends when the watch view is left or the feature is switched off.
   // ---------------------------------------------------------------------------
   const THEATER_CSS = `
 html[data-delve-theater] { overflow: hidden !important; }
 html[data-delve-theater] .app--watch .stage--watch { position: fixed !important; inset: 0 !important; z-index: 9000 !important; width: auto !important; height: auto !important; max-height: none !important; margin: 0 !important; padding: 0 !important; background: #000; transition: none !important; }
 html[data-delve-theater] .app--watch .stage--watch .stage-video-col { position: relative; height: 100%; padding: 0 !important; box-shadow: none !important; }
 html[data-delve-theater] .app--watch .stage--watch .stage-video-wrap { height: 100%; padding-top: 0 !important; }
-html[data-delve-theater] .app--watch .stage--watch .stage-keys { display: block !important; position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: rgba(0, 0, 0, .6); transition: transform .3s; }
+html[data-delve-theater] .app--watch .stage--watch .stage-keys { display: block !important; position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; background: rgba(0, 0, 0, .6); transition: transform .3s; }
 html[data-delve-theater] .app--watch .stage--watch :is(.stage-player-header, .stage-player-info) { display: none !important; }
-#delve-theater-exit { position: absolute; top: 8px; right: 8px; z-index: 5; opacity: .6; transition: opacity .3s; }
+#delve-theater-exit { position: absolute; top: 8px; right: 8px; z-index: 30; opacity: .6; transition: opacity .3s; }
 #delve-theater-exit:hover, #delve-theater-exit:focus-visible { opacity: 1; }
 html[data-delve-theater-idle] .app--watch .stage--watch, html[data-delve-theater-idle] .app--watch .stage--watch * { cursor: none !important; }
 html[data-delve-theater-idle] .app--watch .stage--watch .stage-keys { transform: translateY(100%); }
@@ -3396,10 +3396,15 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
   const THEATER_IDLE_MS = 3000;
   let theaterIdleTimer = 0;
   const inTheater = () => root.hasAttribute('data-delve-theater');
+  const theaterVideoShowing = () => { const video = document.querySelector('.app--watch .stage--watch video'); return !!video && video.readyState >= 2; };
   function wakeTheater() {
     clearTimeout(theaterIdleTimer);
     root.removeAttribute('data-delve-theater-idle');
-    if (inTheater()) theaterIdleTimer = setTimeout(() => root.setAttribute('data-delve-theater-idle', ''), THEATER_IDLE_MS);
+    if (!inTheater()) return;
+    theaterIdleTimer = setTimeout(() => {
+      if (theaterVideoShowing()) root.setAttribute('data-delve-theater-idle', '');
+      else wakeTheater();   // keep the exit button while no picture is up
+    }, THEATER_IDLE_MS);
   }
   ['mousemove', 'mousedown', 'touchstart'].forEach(type => document.addEventListener(type, wakeTheater, true));
   const setTheater = on => { if (on) root.setAttribute('data-delve-theater', ''); else root.removeAttribute('data-delve-theater'); wakeTheater(); ensureTheater(); };
@@ -3411,15 +3416,16 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       return;
     }
     const bar = stage.querySelector('.stage-volume-bar');
-    if (!bar) { warnMissing('.stage-volume-bar', 'Theater mode'); return; }
-    let enter = document.getElementById('delve-theater');
-    if (!enter) {
-      enter = document.createElement('button');
-      enter.id = 'delve-theater'; enter.type = 'button'; enter.className = 'popup-toggle-btn'; enter.textContent = 'THEATER';
-      enter.title = 'Theater mode: the video fills the window';
-      enter.addEventListener('click', () => setTheater(true));
-    }
-    if (enter.parentElement !== bar) bar.append(enter);
+    if (bar) {
+      let enter = document.getElementById('delve-theater');
+      if (!enter) {
+        enter = document.createElement('button');
+        enter.id = 'delve-theater'; enter.type = 'button'; enter.className = 'popup-toggle-btn'; enter.textContent = 'THEATER';
+        enter.title = 'Theater mode: the video fills the window';
+        enter.addEventListener('click', () => setTheater(true));
+      }
+      if (enter.parentElement !== bar) bar.append(enter);
+    } else if (!inTheater()) { warnMissing('.stage-volume-bar', 'Theater mode'); return; }
     let exit = document.getElementById('delve-theater-exit');
     if (!inTheater()) { if (exit) exit.remove(); return; }
     if (!exit) {
@@ -3461,8 +3467,6 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     if (location.href === lastHref) return;
     lastHref = location.href;
     closeDrawer();
-    root.removeAttribute('data-delve-theater');
-    wakeTheater();
   }
 
   // Split: going to or from the guide view the page switches between a two-column grid and a single column in one step, so

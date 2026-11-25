@@ -158,7 +158,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - Sort
 - Search (the SEARCH button and popup)
 - Extended guide (the wider timeline, Window zoom, Now button and Now line)
-- Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window on black, with no header, guide or footer; the player's key row sits over the bottom of the picture, so PICTURE and the other buttons still work. **EXIT THEATER** in the top right corner goes back, and so does changing page. After 3 seconds without mouse movement the exit button fades, the key row slides down out of view and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
+- Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window on black, with no header, guide or footer; the player's key row sits over the bottom of the picture, so PICTURE and the other buttons still work. **EXIT THEATER** in the top right corner goes back, and so does leaving the watch view; changing channel keeps theater mode on. After 3 seconds without mouse movement the exit button fades, the key row slides down out of view and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
 
 ![Theater mode with the key row over the picture](images/theater.png)
 
