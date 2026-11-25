@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.35.2
+// @version      0.35.3
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2206,7 +2206,19 @@ html[data-delve-wide] .app--watch:not(.app--channel) .tv-grid { flex: 0 0 auto; 
     wideRoot.querySelectorAll(':scope > .grid-row').forEach(r => {
       const s = site.get(r.dataset.channel);
       ['highlighted', 'active'].forEach(k => { const on = !!s && s.classList.contains(k); if (r.classList.contains(k) !== on) r.classList.toggle(k, on); });
+      if (s) mirrorChild(s.querySelector('.grid-channel-name-wrap'), r.querySelector('.grid-channel-name-wrap'), '.grid-channel-tags');
     });
+    const siteHeadCell = document.querySelector(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid > .tv-grid-body > .grid-time-header .grid-time-label-cell');
+    mirrorChild(siteHeadCell, wideRoot.querySelector(':scope > .grid-time-header .grid-time-label-cell'), '.grid-time-viewers');
+  }
+
+  // The watch counts reach the site's rows after the wider view was copied from them, and change while it is open.
+  function mirrorChild(siteParent, wideParent, selector) {
+    if (!siteParent || !wideParent) return;
+    const from = siteParent.querySelector(selector), to = wideParent.querySelector(selector);
+    if (!from) { if (to) to.remove(); }
+    else if (!to) wideParent.append(from.cloneNode(true));
+    else if (to.outerHTML !== from.outerHTML) to.replaceWith(from.cloneNode(true));
   }
 
   let resizeQuietAt = 0, wideHoldUntil = 0;
