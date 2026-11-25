@@ -163,6 +163,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 ![Theater mode with the key row over the picture](images/theater.png)
 
 - 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)
+- Tag tooltips (hovering the REWIND tag in the guide explains it: original broadcasts, with commercials, variety programming and whole blocks)
 - Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens the audio panel; see [Audio tweaks](#audio-tweaks) above)
 - Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a panel with sliders for **Brightness** and **Contrast** (50% to 150%), **Saturation** (0% to 200%), **Dim** (0% to 90% toward black), **Zoom** (50% to 150%) and **Width** and **Height** (50% to 150% each, stretching one direction only) and **Left / right** and **Up / down** alignment (up to 25% either way, like a TV's overscan: the picture moves, the far edge is cut off and black shows on the other side), plus **Crop** (Off, 4:3, 16:9 or 21:9: the largest box of that shape that fits the player, centered; **Crop fit** chooses whether the picture is scaled to **Fill** the box, cutting what overflows, or to **Fit** inside it, cutting nothing). The video changes as you drag, in every view. Click elsewhere to close. The settings are remembered. The Watermark does not follow Zoom, alignment or Crop)
 
@@ -200,7 +201,6 @@ Ideas under consideration:
 - Channel flipper, "Spelunk my favorites" and auto-surf
 - A test pattern screen when a stream fails
 - Start times, past blocks and "late night" labels in the guide
-- Tooltips for tags like [rewind]
 - An always-visible volume slider
 - A close button or minimal chrome on desktop
 - An ambient screensaver mode

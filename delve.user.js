@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.9
+// @version      0.35.0
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -71,6 +71,7 @@
     extended: false,      // extended guide: wider view, zoom, Now button, Now line
     theater: false,       // THEATER button on the player
     clock24: false,       // times shown as 13:00 instead of 1:00 PM
+    tagTips: false,       // hover text on the guide's REWIND tag
     searchOn: false,      // SEARCH button and popup
     pictureOn: false,     // brightness and contrast sliders for the video
     brightness: 100,      // percent, PICTURE_SLIDERS
@@ -103,7 +104,7 @@
     watermarkLogo: 'original',         // WATERMARK_LOGOS
   };
   const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
-  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player']];
+  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'],['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player']];
   const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
   const WATERMARK_LOGOS = [['original', 'Original'], ['contrast', 'B&W']];
@@ -588,6 +589,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
         ensurePicture();
         ensureAudio();
         ensureClock24();
+        ensureTagTips();
       });
       row.append(label, b);
       row.dataset.group = group;
@@ -3555,6 +3557,14 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     });
   }
 
+  const REWIND_TIP = 'Rewind: original broadcasts, with commercials, variety programming and whole blocks.';
+  function ensureTagTips() {
+    document.querySelectorAll('.grid-channel-rewind').forEach(tag => {
+      if (settings.tagTips) { if (!tag.title) { tag.title = REWIND_TIP; tag.dataset.delveTip = ''; } }
+      else if ('delveTip' in tag.dataset) { tag.removeAttribute('title'); delete tag.dataset.delveTip; }
+    });
+  }
+
   let pending = false;
   const observer = new MutationObserver(() => {
     if (pending) return;
@@ -3570,6 +3580,7 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       ensureHide();
       ensureWatermark();
       ensureClock24();
+      ensureTagTips();
       ensureGuide();
     });
   });
