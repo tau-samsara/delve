@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.37.0
+// @version      0.38.0
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -104,9 +104,12 @@
     watermarkCorner: 'bottom-right',   // WATERMARK_CORNERS
     watermarkLogo: 'original',         // WATERMARK_LOGOS
     volumePopup: false,   // volume slider popup on the guide's mute button
+    autoSpelunkOn: false, // AUTO button beside SPELUNK: tunes a random channel on a timer
+    autoSpelunkSeconds: 0,   // AUTO_SPELUNK_INTERVALS; 0 is off
   };
   const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
-  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player']];
+  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player'], ['autoSpelunkOn', 'Auto spelunk', 'player']];
+  const AUTO_SPELUNK_INTERVALS = [[0, 'Off'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min']];
   const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
   const WATERMARK_LOGOS = [['original', 'Original'], ['contrast', 'B&W']];
@@ -162,6 +165,7 @@
         if (typeof parsed.mono === 'boolean') out.mono = parsed.mono;
         if (MONO_SOURCES.some(([key]) => key === parsed.monoSource)) out.monoSource = parsed.monoSource;
         if (HIDE_MODES.some(([key]) => key === parsed.hideMode)) out.hideMode = parsed.hideMode;
+        if (AUTO_SPELUNK_INTERVALS.some(([seconds]) => seconds === parsed.autoSpelunkSeconds)) out.autoSpelunkSeconds = parsed.autoSpelunkSeconds;
         if (typeof parsed.watermarkShow === 'boolean') out.watermarkShow = parsed.watermarkShow;
         // 0.34.0 and 0.34.1 allowed 10-100; a saved value above the new maximum becomes the maximum
         if (Number.isInteger(parsed.watermarkOpacity) && parsed.watermarkOpacity > 20 && parsed.watermarkOpacity <= 100) parsed.watermarkOpacity = 20;
@@ -500,7 +504,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + CHANGELOG_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + WATCHERS_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + WATERMARK_CSS + VOLUME_POPUP_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + CHANGELOG_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + WATCHERS_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + AUTO_SPELUNK_CSS + WATERMARK_CSS + VOLUME_POPUP_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -3378,6 +3382,91 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     }
   }
   // ---------------------------------------------------------------------------
+  // Auto spelunk: an AUTO button beside the site's SPELUNK button; its popup picks an interval, and the site's button is clicked on that timer.
+  // ---------------------------------------------------------------------------
+  const AUTO_SPELUNK_CSS = `
+.stage-dvr-bar:has(.delve-auto-ctl.subtitle-ctl--open) { overflow: visible; }
+.delve-auto-panel[hidden] { display: none; }
+.delve-auto-ctl .delve-auto-panel { width: 300px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
+@media (max-width: 480px) { :root .delve-auto-ctl .delve-auto-panel { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); } }
+.delve-auto-panel .delve-seg { gap: 4px; }
+:root .delve-auto-panel .delve-seg button { padding-left: 2px; padding-right: 2px; letter-spacing: 0; font-size: 16px; }
+`;
+  const SPELUNK_BUTTON_SELECTOR = '.app--watch .player-spelunk-btn';
+  let autoSpelunkPanel = null;
+  let autoSpelunkSecondsLeft = 0;
+  function syncAutoSpelunk() {
+    const button = document.getElementById('delve-auto');
+    if (button) {
+      const left = autoSpelunkSecondsLeft;
+      button.textContent = settings.autoSpelunkSeconds ? 'AUTO ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0') : 'AUTO';
+      button.classList.toggle('popup-toggle-btn--on', settings.autoSpelunkSeconds > 0);
+    }
+    autoSpelunkPanel?.querySelectorAll('[data-auto-choice]').forEach(choice => {
+      const on = Number(choice.dataset.autoChoice) === settings.autoSpelunkSeconds;
+      choice.setAttribute('aria-pressed', String(on));
+      choice.classList.toggle('popup-toggle-btn--on', on);
+    });
+  }
+  function buildAutoSpelunkPanel() {
+    autoSpelunkPanel = document.createElement('div');
+    autoSpelunkPanel.className = 'cc-panel delve-auto-panel';
+    autoSpelunkPanel.hidden = true;
+    const head = document.createElement('div');
+    head.className = 'cc-panel-head';
+    head.append('Auto spelunk: new channel every');
+    const choices = document.createElement('div');
+    choices.className = 'delve-seg';
+    AUTO_SPELUNK_INTERVALS.forEach(([seconds, name]) => {
+      const choice = document.createElement('button');
+      choice.type = 'button'; choice.className = 'popup-toggle-btn'; choice.dataset.autoChoice = seconds; choice.textContent = name;
+      choice.addEventListener('click', () => { autoSpelunkSecondsLeft = seconds; setSettings({ autoSpelunkSeconds: seconds }); syncAutoSpelunk(); });
+      choices.append(choice);
+    });
+    autoSpelunkPanel.append(head, choices);
+  }
+  function setAutoSpelunkPanelOpen(open) {
+    if (!autoSpelunkPanel) return;
+    autoSpelunkPanel.hidden = !open;
+    autoSpelunkPanel.parentElement?.classList.toggle('subtitle-ctl--open', open);
+  }
+  document.addEventListener('mousedown', e => {
+    if (autoSpelunkPanel && !autoSpelunkPanel.hidden && !e.target.closest('.delve-auto-ctl')) setAutoSpelunkPanelOpen(false);
+  }, true);
+  document.addEventListener('click', e => {
+    if (e.target.closest(SPELUNK_BUTTON_SELECTOR)) autoSpelunkSecondsLeft = settings.autoSpelunkSeconds;   // a manual jump restarts the countdown
+  }, true);
+  setInterval(() => {
+    const spelunkButton = settings.autoSpelunkOn && settings.autoSpelunkSeconds && document.querySelector(SPELUNK_BUTTON_SELECTOR);
+    if (!spelunkButton) return;
+    autoSpelunkSecondsLeft--;
+    if (autoSpelunkSecondsLeft <= 0) spelunkButton.click();   // the click handler above restarts the countdown
+    syncAutoSpelunk();
+  }, 1000);
+  function ensureAutoSpelunk() {
+    const spelunkButton = settings.autoSpelunkOn && document.querySelector(SPELUNK_BUTTON_SELECTOR);
+    if (!spelunkButton) {
+      if (settings.autoSpelunkOn && document.querySelector('.app--watch')) warnMissing('.player-spelunk-btn', 'Auto spelunk');
+      setAutoSpelunkPanelOpen(false);
+      document.querySelector('.delve-auto-ctl')?.remove();
+      return;
+    }
+    let ctl = document.querySelector('.delve-auto-ctl');
+    if (!ctl) {
+      ctl = document.createElement('span');
+      ctl.className = 'subtitle-ctl delve-auto-ctl';
+      const button = document.createElement('button');
+      button.id = 'delve-auto'; button.type = 'button'; button.className = 'popup-toggle-btn';
+      button.title = 'Tune a random channel on a timer';
+      if (!autoSpelunkPanel) buildAutoSpelunkPanel();
+      button.addEventListener('click', () => setAutoSpelunkPanelOpen(autoSpelunkPanel.hidden));
+      ctl.append(button, autoSpelunkPanel);
+    }
+    if (ctl.previousElementSibling !== spelunkButton) spelunkButton.after(ctl);
+    if (!autoSpelunkSecondsLeft) autoSpelunkSecondsLeft = settings.autoSpelunkSeconds;
+    syncAutoSpelunk();
+  }
+  // ---------------------------------------------------------------------------
   // Watermark: the channel's logo, copied from the player header, drawn over a corner of the visible picture (the video
   // element also covers the black bars, so the box is worked out from the stream's size, Picture's crop, zoom and shift).
   // ---------------------------------------------------------------------------
@@ -3804,6 +3893,7 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       ensurePicture();
       ensureAudio();
       ensureHide();
+      ensureAutoSpelunk();
       ensureWatermark();
       ensureClock24();
       ensureTagTips();

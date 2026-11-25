@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.38.0 - 2026-11-25
+- Added Auto spelunk (Player switch, off by default): an AUTO button next to SPELUNK opens a popup to pick Off, 15 s, 30 s, 1 min or 5 min. Delve then presses SPELUNK for you each time the countdown on the AUTO button reaches zero, and pressing SPELUNK yourself restarts the countdown.
+
 ## 0.37.0 - 2026-11-25
 - Added Volume slider (Player switch, off by default): in the guide, hovering the mute button opens a small volume slider above it, since the site shows no volume slider in the guide's compact player.
 
