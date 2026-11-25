@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.34.3
+// @version      0.34.4
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -77,11 +77,12 @@
     saturation: 100,      // percent, PICTURE_SLIDERS
     dim: 0,               // percent toward black, PICTURE_SLIDERS
     pictureZoom: 100,     // percent, PICTURE_SLIDERS
+    pictureWidth: 100,    // percent, stretches the picture sideways only, PICTURE_SLIDERS
+    pictureHeight: 100,   // percent, stretches the picture up and down only, PICTURE_SLIDERS
     alignX: 0,            // percent of the width the picture is moved right (overscan), PICTURE_SLIDERS
     alignY: 0,            // percent of the height the picture is moved down, PICTURE_SLIDERS
     pictureCrop: 'off',   // PICTURE_CROPS
     pictureCropFit: 'fill',   // PICTURE_CROP_FITS: the picture fills the crop box or fits inside it
-    lightsOut: false,     // everything but the player goes black
     audioOn: false,       // AUDIO button: volume boost above 100%
     boost: 100,           // percent, BOOST_RANGE
     mono: false,          // play one channel, or both mixed, in both ears
@@ -113,7 +114,9 @@
     ['contrast', 'Contrast', { min: 50, max: 150, step: 5 }],
     ['saturation', 'Saturation', { min: 0, max: 200, step: 5 }],
     ['dim', 'Dim', { min: 0, max: 90, step: 5 }],
-    ['pictureZoom', 'Zoom', { min: 100, max: 150, step: 1 }],
+    ['pictureZoom', 'Zoom', { min: 50, max: 150, step: 1 }],
+    ['pictureWidth', 'Width', { min: 50, max: 150, step: 1 }],
+    ['pictureHeight', 'Height', { min: 50, max: 150, step: 1 }],
     ['alignX', 'Left / right', { min: -25, max: 25, step: 1 }],
     ['alignY', 'Up / down', { min: -25, max: 25, step: 1 }],
   ];
@@ -143,7 +146,6 @@
         });
         if (PICTURE_CROPS.some(([key]) => key === parsed.pictureCrop)) out.pictureCrop = parsed.pictureCrop;
         if (PICTURE_CROP_FITS.some(([key]) => key === parsed.pictureCropFit)) out.pictureCropFit = parsed.pictureCropFit;
-        if (typeof parsed.lightsOut === 'boolean') out.lightsOut = parsed.lightsOut;
         if (Number.isFinite(parsed.boost) && parsed.boost >= BOOST_RANGE.min && parsed.boost <= BOOST_RANGE.max) out.boost = parsed.boost;
         if (Number.isInteger(parsed.syncMs) && parsed.syncMs >= SYNC_RANGE.min && parsed.syncMs <= SYNC_RANGE.max) out.syncMs = parsed.syncMs;
         if (typeof parsed.night === 'boolean') out.night = parsed.night;
@@ -184,13 +186,13 @@
   }
 
   function applyPicture() {
-    if (!settings.pictureOn) { root.removeAttribute('data-delve-picture'); root.removeAttribute('data-delve-lights-out'); return; }
-    const { brightness, contrast, saturation, dim, pictureZoom, alignX, alignY } = settings;
+    if (!settings.pictureOn) { root.removeAttribute('data-delve-picture'); return; }
+    const { brightness, contrast, saturation, dim, pictureZoom, pictureWidth, pictureHeight, alignX, alignY } = settings;
     root.style.setProperty('--delve-picture-filter', `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%) brightness(${100 - dim}%)`);
-    root.style.setProperty('--delve-picture-zoom', pictureZoom / 100);
+    root.style.setProperty('--delve-picture-scale-x', pictureZoom * pictureWidth / 10000);
+    root.style.setProperty('--delve-picture-scale-y', pictureZoom * pictureHeight / 10000);
     root.style.setProperty('--delve-picture-align', `${alignX}% ${alignY}%`);
     root.setAttribute('data-delve-picture', '');
-    root.toggleAttribute('data-delve-lights-out', settings.lightsOut);
     updatePictureCrop();
     syncPicturePanel();
   }
@@ -2321,19 +2323,19 @@ html[data-delve-pan] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   const THEATER_CSS = `
 html[data-delve-theater] { overflow: hidden !important; }
 html[data-delve-theater] .app--watch .stage--watch { position: fixed !important; inset: 0 !important; z-index: 9000 !important; width: auto !important; height: auto !important; max-height: none !important; margin: 0 !important; padding: 0 !important; background: #000; transition: none !important; }
-html[data-delve-theater] .app--watch .stage--watch .stage-video-col { height: 100%; padding: 0 !important; box-shadow: none !important; }
+html[data-delve-theater] .app--watch .stage--watch .stage-video-col { position: relative; height: 100%; padding: 0 !important; box-shadow: none !important; }
 html[data-delve-theater] .app--watch .stage--watch .stage-video-wrap { height: 100%; padding-top: 0 !important; }
-html[data-delve-theater] .app--watch .stage--watch :is(.stage-player-header, .stage-keys, .stage-player-info) { display: none !important; }
+html[data-delve-theater] .app--watch .stage--watch .stage-keys { display: block !important; position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: rgba(0, 0, 0, .6); transition: transform .3s; }
+html[data-delve-theater] .app--watch .stage--watch :is(.stage-player-header, .stage-player-info) { display: none !important; }
 #delve-theater-exit { position: absolute; top: 8px; right: 8px; z-index: 5; opacity: .6; transition: opacity .3s; }
 #delve-theater-exit:hover, #delve-theater-exit:focus-visible { opacity: 1; }
 html[data-delve-theater-idle] .app--watch .stage--watch, html[data-delve-theater-idle] .app--watch .stage--watch * { cursor: none !important; }
+html[data-delve-theater-idle] .app--watch .stage--watch .stage-keys { transform: translateY(100%); }
 html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: none; }
 `;
   const PICTURE_CSS = `
-html[data-delve-picture] video { filter: var(--delve-picture-filter); translate: var(--delve-picture-align); scale: calc(var(--delve-picture-zoom) * var(--delve-picture-crop-scale, 1)); clip-path: var(--delve-picture-crop-clip, none); }
+html[data-delve-picture] video { filter: var(--delve-picture-filter); translate: var(--delve-picture-align); scale: calc(var(--delve-picture-scale-x) * var(--delve-picture-crop-scale, 1)) calc(var(--delve-picture-scale-y) * var(--delve-picture-crop-scale, 1)); clip-path: var(--delve-picture-crop-clip, none); }
 html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow: hidden; }
-html[data-delve-lights-out] .app--watch .stage--watch .stage-video-wrap { position: relative; z-index: 9000; box-shadow: 0 0 0 200vmax #000; }
-html[data-delve-lights-out] .app--watch .stage--watch .stage-volume-bar, html[data-delve-lights-out] .delve-picture-ctl { position: relative; z-index: 9001; }
 .delve-picture-panel[hidden] { display: none; }
 /* Panel, heading and button come from the site's CRT/ZZZ popups (cc-panel); only the slider sizing is ours. */
 .delve-picture-ctl .delve-picture-panel { width: 240px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
@@ -2358,10 +2360,6 @@ html[data-delve-lights-out] .app--watch .stage--watch .stage-volume-bar, html[da
       button.setAttribute('aria-pressed', String(on));
       button.classList.toggle('popup-toggle-btn--on', on);
     });
-    const lightsOut = picturePanel.querySelector('[data-picture-lights-out]');
-    lightsOut.textContent = settings.lightsOut ? 'On' : 'Off';
-    lightsOut.setAttribute('aria-pressed', String(settings.lightsOut));
-    lightsOut.classList.toggle('popup-toggle-btn--on', settings.lightsOut);
   }
   function buildPicturePanel() {
     picturePanel = document.createElement('div');
@@ -2394,13 +2392,6 @@ html[data-delve-lights-out] .app--watch .stage--watch .stage-volume-bar, html[da
       });
       picturePanel.append(head, row);
     });
-    const lightsHead = document.createElement('div');
-    lightsHead.className = 'cc-panel-head';
-    const lightsOut = document.createElement('button');
-    lightsOut.type = 'button'; lightsOut.className = 'popup-toggle-btn'; lightsOut.dataset.pictureLightsOut = '';
-    lightsOut.addEventListener('click', () => setSettings({ lightsOut: !settings.lightsOut }));
-    lightsHead.append('Lights-out', lightsOut);
-    picturePanel.append(lightsHead);
     syncPicturePanel();
   }
   function setPicturePanelOpen(open) {
@@ -2434,7 +2425,7 @@ html[data-delve-lights-out] .app--watch .stage--watch .stage-volume-bar, html[da
       ctl.className = 'subtitle-ctl delve-picture-ctl';
       const button = document.createElement('button');
       button.id = 'delve-picture'; button.type = 'button'; button.className = 'popup-toggle-btn'; button.textContent = 'PICTURE';
-      button.title = 'Brightness, contrast, saturation, dim, zoom, alignment, crop and lights-out';
+      button.title = 'Brightness, contrast, saturation, dim, zoom, alignment and crop';
       button.setAttribute('aria-expanded', 'false');
       if (!picturePanel) buildPicturePanel();
       button.addEventListener('click', () => setPicturePanelOpen(picturePanel.hidden));
