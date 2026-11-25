@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.36.1
+// @version      0.36.2
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -205,21 +205,23 @@
   }
   // The crop box is the largest rectangle of the chosen shape that fits the video element, centered. The picture is scaled
   // to fill it (the overflow is clipped) or to fit inside it. The clip is in the element's own coordinates, before the scale.
-  function updatePictureCrop() {
-    const video = document.querySelector('video');
+  const NO_CROP = { cropScale: 1, insetX: 0, insetY: 0 };
+  function pictureCropGeometry(video) {
     const aspect = PICTURE_CROPS.find(([key]) => key === settings.pictureCrop)[2];
-    let cropScale = 1, clip = 'none';
-    if (aspect && video && video.videoWidth && video.clientWidth && video.clientHeight) {
-      const { clientWidth: frameWidth, clientHeight: frameHeight } = video;
-      const pictureScale = Math.min(frameWidth / video.videoWidth, frameHeight / video.videoHeight);
-      const pictureWidth = video.videoWidth * pictureScale, pictureHeight = video.videoHeight * pictureScale;
-      const boxWidth = Math.min(frameWidth, frameHeight * aspect), boxHeight = boxWidth / aspect;
-      const [widthRatio, heightRatio] = [boxWidth / pictureWidth, boxHeight / pictureHeight];
-      cropScale = settings.pictureCropFit === 'fit' ? Math.min(widthRatio, heightRatio) : Math.max(widthRatio, heightRatio);
-      clip = `inset(${(frameHeight - boxHeight / cropScale) / 2}px ${(frameWidth - boxWidth / cropScale) / 2}px)`;
-    }
-    root.style.setProperty('--delve-picture-crop-scale', cropScale);
-    root.style.setProperty('--delve-picture-crop-clip', clip);
+    if (!aspect || !video || !video.videoWidth || !video.clientWidth || !video.clientHeight) return NO_CROP;
+    const { clientWidth: frameWidth, clientHeight: frameHeight } = video;
+    const pictureScale = Math.min(frameWidth / video.videoWidth, frameHeight / video.videoHeight);
+    const pictureWidth = video.videoWidth * pictureScale, pictureHeight = video.videoHeight * pictureScale;
+    const boxWidth = Math.min(frameWidth, frameHeight * aspect), boxHeight = boxWidth / aspect;
+    const [widthRatio, heightRatio] = [boxWidth / pictureWidth, boxHeight / pictureHeight];
+    const cropScale = settings.pictureCropFit === 'fit' ? Math.min(widthRatio, heightRatio) : Math.max(widthRatio, heightRatio);
+    return { cropScale, insetX: (frameWidth - boxWidth / cropScale) / 2, insetY: (frameHeight - boxHeight / cropScale) / 2 };
+  }
+  function updatePictureCrop() {
+    const crop = pictureCropGeometry(document.querySelector('video'));
+    root.style.setProperty('--delve-picture-crop-scale', crop.cropScale);
+    root.style.setProperty('--delve-picture-crop-clip', crop === NO_CROP ? 'none' : `inset(${crop.insetY}px ${crop.insetX}px)`);
+    placeWatermark();
   }
 
   // ---------------------------------------------------------------------------
@@ -3316,8 +3318,8 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     }
   }
   // ---------------------------------------------------------------------------
-  // Watermark: the channel's logo, copied from the player header, drawn over a corner of the picture itself (the video
-  // element also covers the black bars, so the picture's box is worked out from the stream's size).
+  // Watermark: the channel's logo, copied from the player header, drawn over a corner of the visible picture (the video
+  // element also covers the black bars, so the box is worked out from the stream's size, Picture's crop, zoom and shift).
   // ---------------------------------------------------------------------------
   const WATERMARK_CSS = `
 .delve-wm-picture { position: absolute; display: flex; box-sizing: border-box; padding: calc(var(--delve-wm-size) * .3); pointer-events: none; }
@@ -3344,11 +3346,24 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     if (!video) return;
     const { videoWidth, videoHeight, offsetLeft, offsetTop, clientWidth, clientHeight } = video;
     if (!videoWidth || !videoHeight || !clientWidth || !clientHeight) { box.hidden = true; return; }
-    const scale = Math.min(clientWidth / videoWidth, clientHeight / videoHeight);
-    const width = videoWidth * scale, height = videoHeight * scale;
+    const fit = Math.min(clientWidth / videoWidth, clientHeight / videoHeight);
+    let scaleX = 1, scaleY = 1, shiftX = 0, shiftY = 0, crop = NO_CROP;
+    if (settings.pictureOn) {
+      crop = pictureCropGeometry(video);
+      scaleX = settings.pictureZoom * settings.pictureWidth / 10000 * crop.cropScale;
+      scaleY = settings.pictureZoom * settings.pictureHeight / 10000 * crop.cropScale;
+      shiftX = settings.alignX / 100 * clientWidth;
+      shiftY = settings.alignY / 100 * clientHeight;
+    }
+    // Visible part: the picture overlapping the crop box, mirrored by Picture's scale and shift, kept inside the frame.
+    const width = Math.min(videoWidth * fit, clientWidth - 2 * crop.insetX) * scaleX;
+    const height = Math.min(videoHeight * fit, clientHeight - 2 * crop.insetY) * scaleY;
+    const left = Math.max(clientWidth / 2 + shiftX - width / 2, 0), right = Math.min(clientWidth / 2 + shiftX + width / 2, clientWidth);
+    const top = Math.max(clientHeight / 2 + shiftY - height / 2, 0), bottom = Math.min(clientHeight / 2 + shiftY + height / 2, clientHeight);
+    if (right <= left || bottom <= top) { box.hidden = true; return; }
     box.hidden = false;
-    Object.assign(box.style, { left: offsetLeft + (clientWidth - width) / 2 + 'px', top: offsetTop + (clientHeight - height) / 2 + 'px', width: width + 'px', height: height + 'px' });
-    box.style.setProperty('--delve-wm-size', Math.round(height * settings.watermarkSize / 100) + 'px');
+    Object.assign(box.style, { left: offsetLeft + left + 'px', top: offsetTop + top + 'px', width: right - left + 'px', height: bottom - top + 'px' });
+    box.style.setProperty('--delve-wm-size', Math.round((bottom - top) * settings.watermarkSize / 100) + 'px');
     box.style.setProperty('--delve-wm-opacity', settings.watermarkOpacity / 100);
   }
   // B&W: the logo's second fill is its background and is removed (a blend or filter over the video changes its picture).

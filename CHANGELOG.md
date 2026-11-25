@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.36.2 - 2026-11-24
+- Watermark: it now sits in the corner of the visible picture, where the picture meets the Crop box, and follows Zoom, Width, Height and the Left / right and Up / down alignment. Size is a percentage of the visible picture's height.
+
 ## 0.36.1 - 2026-11-24
 - Extended guide: the toolbar shows how much of the schedule is loaded, for example "Mon 9:00 PM – Wed 9:00 PM", and the label grows as more days load.
 
