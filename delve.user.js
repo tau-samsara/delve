@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.35.1
+// @version      0.35.2
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -72,6 +72,7 @@
     theater: false,       // THEATER button on the player
     clock24: false,       // times shown as 13:00 instead of 1:00 PM
     tagTips: false,       // hover text on the guide's REWIND tag
+    watchers: false,      // total watcher count beside the nav bar clock and as a card on the home page
     searchOn: false,      // SEARCH button and popup
     pictureOn: false,     // brightness and contrast sliders for the video
     brightness: 100,      // percent, PICTURE_SLIDERS
@@ -104,7 +105,7 @@
     watermarkLogo: 'original',         // WATERMARK_LOGOS
   };
   const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
-  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'],['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player']];
+  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player']];
   const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
   const WATERMARK_LOGOS = [['original', 'Original'], ['contrast', 'B&W']];
@@ -494,7 +495,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + WATERMARK_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + WATCHERS_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + WATERMARK_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -590,6 +591,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
         ensureAudio();
         ensureClock24();
         ensureTagTips();
+        ensureWatchers();
       });
       row.append(label, b);
       row.dataset.group = group;
@@ -649,6 +651,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
       ensurePicture();
       ensureAudio();
       ensureClock24();
+      ensureWatchers();
     });
     footer.append(updateStatus, updateBtn, resetBtn);
 
@@ -2385,6 +2388,11 @@ html[data-delve-pan] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   }
   document.addEventListener('volumechange', () => { if (document.getElementById('delve-mute')) ensureMute(); }, true);   // media events do not bubble: capture
 
+  // The site hides its own watcher badge in this theme; Delve's copy uses the same class and shows itself.
+  const WATCHERS_CSS = `
+#delve-watchers { display: inline-flex !important; order: 7; margin-left: var(--space-2); }
+`;
+
   // ---------------------------------------------------------------------------
   // Theater mode. Watch and channel mode: the video fills the window with nothing else on the page. Not saved; stays on when
   // the channel changes; ends when the watch view is left or the feature is switched off.
@@ -3569,6 +3577,44 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     });
   }
 
+  // Watcher count. The number is copied from the site's own (hidden) header badge; the home page never loads it, so the
+  // last copy is kept until reload.
+  let siteWatchers = null;
+  function ensureWatchers() {
+    const siteBadge = document.querySelector('.header-viewers');
+    const siteNumber = siteBadge && siteBadge.querySelector('.header-viewers-num');
+    if (siteNumber && siteNumber.textContent) siteWatchers = { number: siteNumber.textContent, icon: (siteBadge.querySelector('svg') || { outerHTML: '' }).outerHTML };
+    const clock = document.querySelector('.prevue-header-clock');
+    const homeStats = document.querySelector('.hp-stats');
+    let badge = document.getElementById('delve-watchers');
+    let card = document.getElementById('delve-watchers-card');
+    if (!settings.watchers || !siteWatchers) {
+      if (badge) badge.remove();
+      if (card) card.remove();
+      return;
+    }
+    if (clock) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'delve-watchers'; badge.className = 'header-viewers';
+        badge.title = 'Watching Spelunkr right now, on every channel';
+      }
+      const html = siteWatchers.icon + '<span class="header-viewers-num">' + siteWatchers.number + '</span>';
+      if (badge.innerHTML !== html) badge.innerHTML = html;
+      if (clock.nextElementSibling !== badge) clock.after(badge);
+    } else if (badge) badge.remove();
+    if (homeStats) {
+      if (!card) {
+        card = document.createElement('div');
+        card.id = 'delve-watchers-card'; card.className = 'hp-stat';
+        card.innerHTML = '<div class="hp-stat-val"></div><div class="hp-stat-label">Watching</div><div class="hp-stat-sub">Right Now</div>';
+      }
+      const valueEl = card.querySelector('.hp-stat-val');
+      if (valueEl.textContent !== siteWatchers.number) valueEl.textContent = siteWatchers.number;
+      if (card.parentElement !== homeStats) homeStats.append(card);
+    } else if (card) card.remove();
+  }
+
   let pending = false;
   const observer = new MutationObserver(() => {
     if (pending) return;
@@ -3585,6 +3631,7 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       ensureWatermark();
       ensureClock24();
       ensureTagTips();
+      ensureWatchers();
       ensureGuide();
     });
   });
