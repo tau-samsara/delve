@@ -89,6 +89,8 @@ The **Search** button in the guide toolbar opens a popup with a text box. Type p
 
 The results are on the left. Click one and its information appears on the right. At the top is the channel (icon, name, number and description) with a **Tune to channel** button, which closes the popup and tunes that channel. Under it, for a program: title, year, season and episode, time, length, description, and IMDb and Internet Archive links. A channel result shows only the channel part. On a phone the information sits below the results. Close the popup with ✕ or by clicking outside it.
 
+![The Search popup with a result selected](images/search.png)
+
 ### Extended guide
 
 Turns the guide into a long, sideways-scrolling timeline that shows programs that already aired as well as ones coming up. It looks like the site's guide, just longer.
@@ -112,6 +114,8 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 ### Audio tweaks
 
 Switch on **Audio tweaks** in the drawer. An **AUDIO** button appears just left of the mute button in watch and channel mode. It opens a panel, from top to bottom:
+
+![The AUDIO panel](images/audio-panel.png)
 
 | Control | What it does |
 |---|---|
@@ -152,11 +156,22 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 - Search (the SEARCH button and popup)
 - Extended guide (the wider timeline, Window zoom, Now button and Now line)
 - Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window on black, with no header, guide or footer; the player's key row sits over the bottom of the picture, so PICTURE and the other buttons still work. **EXIT THEATER** in the top right corner goes back, and so does changing page. After 3 seconds without mouse movement the exit button fades, the key row slides down out of view and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
+
+![Theater mode with the key row over the picture](images/theater.png)
+
 - 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)
 - Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens the audio panel; see [Audio tweaks](#audio-tweaks) above)
 - Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a panel with sliders for **Brightness** and **Contrast** (50% to 150%), **Saturation** (0% to 200%), **Dim** (0% to 90% toward black), **Zoom** (50% to 150%) and **Width** and **Height** (50% to 150% each, stretching one direction only) and **Left / right** and **Up / down** alignment (up to 25% either way, like a TV's overscan: the picture moves, the far edge is cut off and black shows on the other side), plus **Crop** (Off, 4:3, 16:9 or 21:9: the largest box of that shape that fits the player, centered; **Crop fit** chooses whether the picture is scaled to **Fill** the box, cutting what overflows, or to **Fit** inside it, cutting nothing). The video changes as you drag, in every view. Click elsewhere to close. The settings are remembered. The Watermark does not follow Zoom, alignment or Crop)
+
+![The PICTURE panel](images/picture-panel.png)
+
 - Hide options (the site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**. Comments hides the comment markers on the scrub bar and the comment pop-ups on the video; Reactions hides the reaction strip on the scrub bar; Both hides all of them. The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row)
+
+![The HIDE popup](images/hide-popup.png)
+
 - Watermark (a WATERMARK button in the player's key row opens a popup that puts the channel's logo over a corner of the picture itself, not over the black bars. **On/Off**, **Size** (4% to 20% of the picture height), **Opacity** (1% to 20%, in 1% steps), **Corner** and **Logo** (Original, or **B&W**: the logo without its background, drawn in white and grays). The watermark is Off until you turn it on in the popup. The settings are remembered)
+
+![The WATERMARK popup, with the logo at the top left of the picture](images/watermark-popup.png)
 
 ## Your settings
 
