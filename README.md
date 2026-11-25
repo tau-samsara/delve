@@ -181,6 +181,8 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 
 ![The WATERMARK popup, with the logo at the top left of the picture](images/watermark-popup.png)
 
+- Volume slider (in the guide's compact player the site shows no volume slider. With this on, hovering the mute button opens a small volume slider above it, and it closes when the pointer leaves. Moving the slider changes the volume only; it does not mute or unmute)
+
 ## Your settings
 
 Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, and the feature switches. None of it is sent anywhere.
@@ -205,7 +207,6 @@ Ideas under consideration:
 - Channel flipper, "Spelunk my favorites" and auto-surf
 - A test pattern screen when a stream fails
 - Start times, past blocks and "late night" labels in the guide
-- An always-visible volume slider
 - A close button or minimal chrome on desktop
 - An ambient screensaver mode
 

@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.36.2
+// @version      0.37.0
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -103,9 +103,10 @@
     watermarkOpacity: 10, // percent, WATERMARK_SLIDERS
     watermarkCorner: 'bottom-right',   // WATERMARK_CORNERS
     watermarkLogo: 'original',         // WATERMARK_LOGOS
+    volumePopup: false,   // volume slider popup on the guide's mute button
   };
   const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
-  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player']];
+  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player']];
   const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
   const WATERMARK_LOGOS = [['original', 'Original'], ['contrast', 'B&W']];
@@ -499,7 +500,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + CHANGELOG_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + WATCHERS_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + WATERMARK_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + CHANGELOG_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + WATCHERS_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + WATERMARK_CSS + VOLUME_POPUP_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -2490,6 +2491,65 @@ html[data-delve-pan] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     if (mine.dataset.state !== (muted ? 'muted' : 'on')) { mine.dataset.state = muted ? 'muted' : 'on'; mine.innerHTML = icon; }
   }
   document.addEventListener('volumechange', () => { if (document.getElementById('delve-mute')) ensureMute(); }, true);   // media events do not bubble: capture
+
+  // Volume slider in the guide: the site's slider is clipped away in the compact player, so hovering a mute button shows one.
+  const MUTE_BUTTON_SELECTOR = '#delve-mute, .guide-ctrl-mute';
+  const VOLUME_POPUP_CSS = `
+:root #delve-volume-popup { position: fixed; z-index: 1000; bottom: auto; transform: none; width: 180px; box-sizing: border-box; }
+:root #delve-volume-popup[hidden] { display: none; }
+#delve-volume-popup .cc-panel-head { display: flex; justify-content: space-between; text-align: left; }
+:root #delve-volume-popup .delve-slider.player-volume-slider { display: block; flex: none; width: 100%; max-width: none; margin: 0 0 4px; box-sizing: border-box; }
+`;
+  let volumePopup = null, volumePopupSlider = null, volumePopupValue = null, volumePopupHideTimer = 0;
+  function showVolumeInPopup(volume) {
+    volumePopupSlider.value = volume;
+    volumePopupSlider.style.setProperty('--volume-pct', volume * 100 + '%');
+    volumePopupValue.textContent = Math.round(volume * 100) + '%';
+  }
+  function setVolumeFromPopup() {
+    const video = document.querySelector('video'), siteSlider = document.querySelector('.player-volume-slider:not(.delve-slider)');
+    const volume = Number(volumePopupSlider.value);
+    showVolumeInPopup(volume);
+    if (video) video.volume = volume;
+    if (!siteSlider) return;
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(siteSlider, String(volume));
+    siteSlider.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  function showVolumePopup(button) {
+    const video = document.querySelector('video');
+    if (!video) return;
+    clearTimeout(volumePopupHideTimer);
+    if (!volumePopup) {
+      volumePopup = document.createElement('div');
+      volumePopup.id = 'delve-volume-popup'; volumePopup.className = 'cc-panel'; volumePopup.hidden = true;
+      volumePopupSlider = document.createElement('input');
+      volumePopupSlider.type = 'range'; volumePopupSlider.className = 'player-volume-slider delve-slider';
+      volumePopupSlider.min = 0; volumePopupSlider.max = 1; volumePopupSlider.step = 0.01;
+      volumePopupSlider.addEventListener('input', setVolumeFromPopup);
+      volumePopupValue = document.createElement('span');
+      const head = document.createElement('label');
+      head.className = 'cc-panel-head';
+      head.append('Volume', volumePopupValue);
+      volumePopup.append(head, volumePopupSlider);
+      document.body.append(volumePopup);
+    }
+    showVolumeInPopup(video.volume);
+    volumePopup.hidden = false;
+    const buttonBox = button.getBoundingClientRect(), popupBox = volumePopup.getBoundingClientRect();
+    const left = Math.min(Math.max(4, buttonBox.left + buttonBox.width / 2 - popupBox.width / 2), innerWidth - popupBox.width - 4);
+    const above = buttonBox.top - popupBox.height - 2;
+    volumePopup.style.left = left + 'px';
+    volumePopup.style.top = (above >= 4 ? above : buttonBox.bottom + 2) + 'px';
+  }
+  document.addEventListener('mouseover', e => {
+    if (!volumePopup && !settings.volumePopup) return;
+    const over = e.target.closest ? e.target : e.target.parentElement;
+    const button = over && over.closest(MUTE_BUTTON_SELECTOR);
+    if (button && settings.volumePopup) { showVolumePopup(button); return; }
+    if (!volumePopup || volumePopup.hidden || e.buttons || (over && over.closest('#delve-volume-popup'))) return;
+    clearTimeout(volumePopupHideTimer);
+    volumePopupHideTimer = setTimeout(() => { volumePopup.hidden = true; }, 250);
+  });
 
   // The site hides its own watcher badge in this theme; Delve's copy uses the same class and shows itself.
   const WATCHERS_CSS = `

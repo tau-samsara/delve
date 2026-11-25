@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.37.0 - 2026-11-25
+- Added Volume slider (Player switch, off by default): in the guide, hovering the mute button opens a small volume slider above it, since the site shows no volume slider in the guide's compact player.
+
 ## 0.36.2 - 2026-11-24
 - Watermark: it now sits in the corner of the visible picture, where the picture meets the Crop box, and follows Zoom, Width, Height and the Left / right and Up / down alignment. Size is a percentage of the visible picture's height.
 
