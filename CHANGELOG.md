@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.5 - 2026-11-25
+- Audio tweaks: the video player no longer keeps every piece of the file it has downloaded in memory. Rewinding around a long video used to add a little memory each time; now it stays small.
+
 ## 0.39.4 - 2026-11-25
 - Extended guide: the hour labels (like 11:00 PM) are no longer hidden by the playhead when the current time is close to the hour; they sit on top of it with a thin dark outline.
 

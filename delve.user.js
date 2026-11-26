@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.4
+// @version      0.39.5
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -3075,6 +3075,15 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
       });
     };
 
+    // MP4Box keeps every chunk it is given (bytes of the other track or skipped by a seek are never "used"), so memory
+    // would grow with playing time and seeks. Chunks that end before every track's next unread sample are not needed.
+    const dropConsumedChunks = () => {
+      const chunks = mp4.stream && mp4.stream.buffers;
+      if (!Array.isArray(chunks)) return;
+      const unreadFrom = Math.min(...trackIds.map(id => { const sample = trackById[id].samples[trackById[id].nextSample]; return sample ? sample.offset : Infinity; }));
+      for (let i = chunks.length - 1; i >= 0; i--) if (chunks[i].fileStart + chunks[i].byteLength <= unreadFrom) chunks.splice(i, 1);
+    };
+
     // After that, each track is fetched from its own position: some files store the audio and video far apart.
     const hasSamplesLeft = id => cursor[id] < trackById[id].samples.length;
     const openTrackIds = () => trackIds.filter(id => hasSamplesLeft(id) && fedUntilSec[id] < video.currentTime + STREAM_BUFFER_AHEAD_SEC);
@@ -3086,6 +3095,7 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
       const start = sample.offset, end = Math.min(fileSize - 1, Math.max(start + STREAM_CHUNK_BYTES, start + sample.size) - 1);
       requestRange(start, end, data => {
         mp4.appendBuffer(data);
+        dropConsumedChunks();
         const before = cursor[id];
         trackIds.forEach(trackId => {
           const samples = trackById[trackId].samples;
