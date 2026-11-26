@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.2 - 2026-11-25
+- On a phone, the SCHEDULE page's top links (About, Updates, Directory, Schedule, App, DELVE) no longer leave APP and DELVE stuck at the left edge when they wrap to a second row; both rows now line up on the right.
+
 ## 0.39.1 - 2026-11-25
 - Channel pages: when Favorites or Hide channels is on, a FAVORITE button and a HIDE CHANNEL button sit in their own row above WATCH and GUIDE. FAVORITE turns gold while the channel is starred, and HIDE CHANNEL becomes UNHIDE CHANNEL once it is hidden.
 

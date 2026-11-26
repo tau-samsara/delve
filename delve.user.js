@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.1
+// @version      0.39.2
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -468,6 +468,7 @@ html .prevue-header-bar > .header-nav-item.header-nav-delve { order: 99; margin-
 /* Phone: DELVE sits by the menu button; tighten the header so the clock stays on screen (B2). */
 @media (max-width: 480px) {
   html .prevue-header-bar:has(.header-nav-delve) { gap: 3px !important; }
+  html .prevue-header-bar:has(.header-nav-delve):not(:has(> .prevue-header-clock)) { justify-content: flex-end; }   /* info pages: a wrapped second row stays right-aligned (B6) */
   html .prevue-header-bar:has(.header-nav-delve) .header-nav-delve, html .prevue-header-bar:has(.header-nav-delve) .header-signin { padding-left: 4px !important; padding-right: 4px !important; min-width: 0 !important; }
 }
 `;
