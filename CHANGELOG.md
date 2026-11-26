@@ -2,6 +2,10 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.0 - 2026-11-25
+- Hide channels: a new Guide switch. Every channel gets a ✕ beside its star that hides it from the guide, and a ⊘ Hidden button in the toolbar shows hidden channels again, dimmed, with a ↺ to bring one back.
+- Hidden channels are skipped: Search leaves them out, Channel Up and Down (buttons or W and S) pass over them, SPELUNK, R and the Auto spelunk timer never stay on one, and clicking a dimmed channel does nothing. If you land on one another way, its stream is removed so nothing plays.
+
 ## 0.38.1 - 2026-11-25
 - Auto spelunk: the AUTO popup has a new Spelunk among row, All channels or ★ Favorites. With Favorites, SPELUNK and the timer jump to a random starred channel other than the one you are on. The row only shows while the Favorites switch is on.
 

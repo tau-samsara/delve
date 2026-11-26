@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.38.1
+// @version      0.39.0
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -60,6 +60,8 @@
     drawerClosed: [],    // drawer groups folded shut, DRAWER_GROUPS keys
     favorites: [],       // starred channel ids
     favOnly: false,      // show only favorite channels
+    hiddenChannels: [],  // channel ids hidden from the guide
+    showHidden: false,   // the Hidden button: hidden channels are shown, dimmed
     sort: 'dial',        // 'dial' | 'name' | 'viewers' | 'favorites'
     zoom: 3,             // hours shown across the guide (one of ZOOMS)
     volume: 0.5,         // remembered between page loads
@@ -67,6 +69,7 @@
     // Feature switches in the drawer; all off by default
     programInfo: false,   // click-for-info card and IMDb / Archive links
     favoritesOn: false,   // stars and Favorites button
+    hideChannelsOn: false,   // hide button on every channel and the Hidden button
     sortOn: false,        // Sort drop-down
     extended: false,      // extended guide: wider view, zoom, Now button, Now line
     theater: false,       // THEATER button on the player
@@ -109,7 +112,7 @@
     spelunkFavoritesOnly: false,   // in the AUTO popup: SPELUNK and the timer pick only starred channels
   };
   const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
-  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player'], ['autoSpelunkOn', 'Auto spelunk', 'player']];
+  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['hideChannelsOn', 'Hide channels', 'guide'],['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player'], ['autoSpelunkOn', 'Auto spelunk', 'player']];
   const AUTO_SPELUNK_INTERVALS = [[0, 'Off'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min']];
   const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];
@@ -147,6 +150,8 @@
         if (Array.isArray(parsed.drawerClosed)) out.drawerClosed = DRAWER_GROUPS.map(g => g[0]).filter(key => parsed.drawerClosed.includes(key));
         if (Array.isArray(parsed.favorites)) out.favorites = parsed.favorites.filter(x => typeof x === 'string');
         if (typeof parsed.favOnly === 'boolean') out.favOnly = parsed.favOnly;
+        if (Array.isArray(parsed.hiddenChannels)) out.hiddenChannels = parsed.hiddenChannels.filter(x => typeof x === 'string');
+        if (typeof parsed.showHidden === 'boolean') out.showHidden = parsed.showHidden;
         if (ZOOMS.indexOf(parsed.zoom) !== -1) out.zoom = parsed.zoom;
         if (typeof parsed.volume === 'number' && parsed.volume >= 0 && parsed.volume <= 1) out.volume = parsed.volume;
         if (typeof parsed.muted === 'boolean') out.muted = parsed.muted;
@@ -1411,6 +1416,7 @@ html.theme-8s .delve-changelog { background: var(--8s-box); border: 0; box-shado
     if (dragClickPending) { dragClickPending = false; e.stopPropagation(); e.preventDefault(); return; }   // the end of a drag, not a click
     const t = e.target;
     if (!t || !t.closest || t.closest('.delve-star')) return;
+    if (t.closest('.grid-row[data-delve-dim]') && !t.closest('.delve-hidebtn')) { e.stopPropagation(); e.preventDefault(); return; }   // a hidden channel can't be tuned
     const siteRowInfo = id => document.querySelector(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid > .tv-grid-body > .grid-row[data-channel="' + CSS.escape(id) + '"] .grid-channel-info');
     // Wider view: a click on a channel selects it on the site, as a click on the site's own row does.
     const wInfo = t.closest('.delve-wide-row > .grid-channel-info');
@@ -1467,17 +1473,18 @@ html.theme-8s .delve-changelog { background: var(--8s-box); border: 0; box-shado
 @media (max-width: 480px) {
   .delve-bar button { padding: 0 8px; letter-spacing: 0; }
   .delve-bar .delve-select { min-width: 0; flex: 1 1 0; width: 0; }
-  .delve-bar .delve-zoom-name, .delve-bar .delve-fav-label { display: none; }
+  .delve-bar .delve-zoom-name, .delve-bar .delve-fav-label, .delve-bar .delve-hidden-label { display: none; }
   .delve-zoom { gap: 4px; }
   .delve-zoom-label { width: 40px; }
 }
 html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .grid-time-header { top: 52px; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-time-header { order: -1; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-hide] { display: none !important; }
-.delve-star { flex: 0 0 auto; align-self: center; width: 16px; height: 28px; margin: 0 0 0 -2px; padding: 0; border: 0; background: transparent; cursor: pointer; font-size: 16px; line-height: 28px; color: inherit; opacity: .35; }
-.delve-star:hover { opacity: 1; }
+:is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-dim] { opacity: .45; }
+.delve-star, .delve-hidebtn { flex: 0 0 auto; align-self: center; width: 16px; height: 28px; margin: 0 0 0 -2px; padding: 0; border: 0; background: transparent; cursor: pointer; font-size: 16px; line-height: 28px; color: inherit; opacity: .35; }
+.delve-star:hover, .delve-hidebtn:hover { opacity: 1; }
 .delve-star.on { opacity: 1; color: var(--8s-yellow, #ffd740); }
-.delve-bar button:focus-visible, .delve-bar select:focus-visible, .delve-star:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
+.delve-bar button:focus-visible, .delve-bar select:focus-visible, .delve-star:focus-visible, .delve-hidebtn:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
 `;
 
   const guideRows = () => Array.from(document.querySelectorAll(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .grid-row'));
@@ -1490,7 +1497,16 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     ensureGuide();
   }
 
-  let bar = null, favBtn = null, sortSel = null, searchBtn = null, wideNote = null, zoomOut = null, zoomIn = null, zoomLbl = null, nowBtn = null, zoomBoxEl = null;
+  const isHiddenChannel = id => settings.hiddenChannels.indexOf(id) !== -1;
+  function toggleHiddenChannel(id) {
+    const list = settings.hiddenChannels.slice();
+    const i = list.indexOf(id);
+    if (i === -1) list.push(id); else list.splice(i, 1);
+    setSettings({ hiddenChannels: list });
+    ensureGuide();
+  }
+
+  let bar = null, favBtn = null, hiddenBtn = null, sortSel = null, searchBtn = null, wideNote = null, zoomOut = null, zoomIn = null, zoomLbl = null, nowBtn = null, zoomBoxEl = null;
   function buildBar() {
     const b = el('div', 'delve-bar');
     favBtn = el('button', 'delve-favbtn popup-toggle-btn');
@@ -1498,6 +1514,11 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     favBtn.title = 'Favorites only';
     favBtn.type = 'button';
     favBtn.addEventListener('click', () => { setSettings({ favOnly: !settings.favOnly }); ensureGuide(); });
+    hiddenBtn = el('button', 'delve-hiddenbtn popup-toggle-btn');
+    hiddenBtn.append('⊘', el('span', 'delve-hidden-label', ' Hidden'));
+    hiddenBtn.title = 'Show hidden channels';
+    hiddenBtn.type = 'button';
+    hiddenBtn.addEventListener('click', () => { setSettings({ showHidden: !settings.showHidden }); ensureGuide(); });
     sortSel = el('select', 'delve-select bbtn bbtn-outline');
     sortSel.setAttribute('aria-label', 'Sort channels');
     Object.keys(SORTS).forEach(k => { const o = el('option', null, (window.matchMedia('(max-width: 480px)').matches ? '' : 'Sort: ') + SORTS[k]); o.value = k; sortSel.append(o); });
@@ -1527,7 +1548,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     nowBtn = el('button', 'delve-nowbtn bbtn bbtn-outline', 'Now');
     nowBtn.type = 'button'; nowBtn.hidden = true;
     nowBtn.addEventListener('click', () => scrollWideToNow(true));
-    b.append(favBtn, sortSel, searchBtn, nowBtn, wideNote, zoomBox);
+    b.append(favBtn, hiddenBtn, sortSel, searchBtn, nowBtn, wideNote, zoomBox);
     return b;
   }
   // The sort in effect: Channel # when the Sort feature is off, or when "Favorites first" is chosen but Favorites is off.
@@ -1537,7 +1558,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     const grid = document.querySelector(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid');
     // With every tool switched off there is nothing to put on the bar, so there is no bar.
     if (!settings.searchOn) closeSearch();
-    if (!grid || !(settings.favoritesOn || settings.sortOn || settings.searchOn || settings.extended)) {
+    if (!grid || !(settings.favoritesOn || settings.hideChannelsOn || settings.sortOn || settings.searchOn || settings.extended)) {
       if (bar && bar.parentNode) bar.remove();
       root.removeAttribute('data-delve-bar');
       return;
@@ -1546,6 +1567,9 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     if (grid.firstElementChild !== bar) grid.insertBefore(bar, grid.firstChild);
     root.setAttribute('data-delve-bar', '1');
     favBtn.hidden = !settings.favoritesOn;
+    hiddenBtn.hidden = !settings.hideChannelsOn;
+    hiddenBtn.classList.toggle('popup-toggle-btn--on', settings.showHidden);
+    hiddenBtn.setAttribute('aria-pressed', String(settings.showHidden));
     sortSel.hidden = !settings.sortOn;
     searchBtn.hidden = !settings.searchOn;
     zoomBoxEl.hidden = !settings.extended;
@@ -1584,10 +1608,34 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     });
   }
 
+  function ensureHideButtons(rows) {
+    if (!settings.hideChannelsOn) { document.querySelectorAll('.delve-hidebtn').forEach(n => n.remove()); return; }
+    rows.forEach(row => {
+      const info = row.querySelector('.grid-channel-info');
+      if (!info) { warnMissing('.grid-channel-info', 'Hide channels'); return; }
+      let btn = info.querySelector(':scope > .delve-hidebtn');
+      if (!btn) {
+        btn = el('button', 'delve-hidebtn');
+        btn.type = 'button';
+        const star = info.querySelector(':scope > .delve-star');
+        if (star) star.after(btn); else info.prepend(btn);
+      }
+      const hidden = isHiddenChannel(row.dataset.channel);
+      const text = hidden ? '↺' : '✕';
+      if (btn.textContent !== text) btn.textContent = text;
+      const label = hidden ? 'Unhide channel' : 'Hide channel';
+      if (btn.title !== label) { btn.title = label; btn.setAttribute('aria-label', label); }
+    });
+  }
+
   function applyFilter(rows) {
     rows.forEach(row => {
-      const hide = settings.favoritesOn && settings.favOnly && !isFav(row.dataset.channel);
+      const id = row.dataset.channel;
+      const channelHidden = settings.hideChannelsOn && isHiddenChannel(id);
+      const hide = (settings.favoritesOn && settings.favOnly && !isFav(id)) || (channelHidden && !settings.showHidden);
       if (hide !== row.hasAttribute('data-delve-hide')) row.toggleAttribute('data-delve-hide', hide);
+      const dim = channelHidden && settings.showHidden;
+      if (dim !== row.hasAttribute('data-delve-dim')) row.toggleAttribute('data-delve-dim', dim);
     });
   }
 
@@ -3457,9 +3505,13 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
   document.addEventListener('mousedown', e => {
     if (autoSpelunkPanel && !autoSpelunkPanel.hidden && !e.target.closest('.delve-auto-ctl')) setAutoSpelunkPanelOpen(false);
   }, true);
-  function randomFavoriteChannel() {
-    const currentChannel = location.pathname.split('/')[1];
-    const others = settings.favorites.filter(channel => channel !== currentChannel);
+  const currentChannelId = () => location.pathname.split('/')[1];
+  const hiddenChannelIds = () => settings.hideChannelsOn ? settings.hiddenChannels : [];
+  function randomSpelunkChannel() {
+    const favoritesOnly = settings.autoSpelunkOn && settings.favoritesOn && settings.spelunkFavoritesOnly;
+    const hidden = hiddenChannelIds();
+    const pool = favoritesOnly ? settings.favorites : hidden.length ? knownChannelIds : [];
+    const others = pool.filter(channel => channel !== currentChannelId() && hidden.indexOf(channel) === -1);
     return others[Math.floor(Math.random() * others.length)];
   }
   const tuneChannel = channel => {
@@ -3469,10 +3521,10 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
   document.addEventListener('click', e => {
     if (!e.target.closest(SPELUNK_BUTTON_SELECTOR)) return;
     autoSpelunkSecondsLeft = settings.autoSpelunkSeconds;   // a manual jump restarts the countdown
-    const favorite = settings.autoSpelunkOn && settings.favoritesOn && settings.spelunkFavoritesOnly && randomFavoriteChannel();
-    if (!favorite) return;   // with no other favorite the site's own random jump runs
+    const channel = randomSpelunkChannel();
+    if (!channel) return;   // with no other channel to pick, the site's own random jump runs
     e.stopPropagation(); e.preventDefault();
-    tuneChannel(favorite);
+    tuneChannel(channel);
   }, true);
   setInterval(() => {
     const spelunkButton = settings.autoSpelunkOn && settings.autoSpelunkSeconds && document.querySelector(SPELUNK_BUTTON_SELECTOR);
@@ -3747,13 +3799,59 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     if (exit.parentElement !== stage) stage.append(exit);
   }
 
+  // ---------------------------------------------------------------------------
+  // Hidden channels are skipped. A flip or spelunk that lands on one is repeated; any other way of arriving (a click, the
+  // address) takes the stream off the video. The site's keys are W, S and R (shown in its button titles).
+  // ---------------------------------------------------------------------------
+  const FLIP_KEYS = ['w', 's', 'r'];
+  const FLIP_BUTTONS = '.player-ch-btn, .guide-ctrl-btn:not(.guide-ctrl-mute), .player-spelunk-btn';
+  const FLIP_REPEAT_LIMIT = 50;   // all channels hidden: stop after one lap
+  const FLIP_FRESH_MS = 10000;
+  let lastFlip = null, flipRepeatsLeft = 0, repeatedOn = '', repeatingFlip = false;
+  const startFlip = repeat => { lastFlip = { repeat, at: Date.now() }; flipRepeatsLeft = FLIP_REPEAT_LIMIT; };
+  document.addEventListener('click', e => {
+    if (repeatingFlip) return;
+    const button = e.target.closest && e.target.closest(FLIP_BUTTONS);
+    if (button) startFlip(() => { if (button.isConnected) button.click(); });
+    else if (e.isTrusted) lastFlip = null;
+  }, true);
+  document.addEventListener('keydown', e => {
+    if (repeatingFlip || !e.isTrusted) return;
+    const typing = e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
+    if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (FLIP_KEYS.indexOf(e.key.toLowerCase()) === -1) { lastFlip = null; return; }
+    startFlip(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, code: e.code, bubbles: true })));
+  }, true);
+
+  const guardedVideos = new WeakSet();
+  function ensureHiddenChannelGuard() {
+    const video = document.querySelector('video');
+    if (video && !guardedVideos.has(video)) {
+      guardedVideos.add(video);
+      new MutationObserver(ensureHiddenChannelGuard).observe(video, { attributes: true, attributeFilter: ['src'] });
+    }
+    const channel = currentChannelId();
+    if (!settings.hideChannelsOn || hiddenChannelIds().indexOf(channel) === -1) { repeatedOn = ''; return; }
+    if (video && video.getAttribute('src')) { video.pause(); video.removeAttribute('src'); video.load(); }
+    if (!lastFlip || flipRepeatsLeft <= 0 || Date.now() - lastFlip.at > FLIP_FRESH_MS || repeatedOn === channel) return;
+    repeatedOn = channel;
+    flipRepeatsLeft--;
+    repeatingFlip = true;
+    try { lastFlip.repeat(); } finally { repeatingFlip = false; }
+    setTimeout(() => { if (currentChannelId() === channel) lastFlip = null; }, 1500);   // the repeat did not move: stop trying
+  }
+
+  let knownChannelIds = [];
   function ensureGuide() {
+    const siteChannels = Array.from(document.querySelectorAll('.tv-grid > .tv-grid-body > .grid-row'), row => row.dataset.channel).filter(Boolean);
+    if (siteChannels.length) knownChannelIds = siteChannels;
     ensureBar();
     ensureWide();
     updatePan();
     const rows = guideRows();
     if (!rows.length) return;
     ensureStars(rows);
+    ensureHideButtons(rows);
     applyFilter(rows);
     applyOrder(rows);
   }
@@ -3766,6 +3864,15 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     e.stopPropagation(); e.preventDefault();
     const row = star.closest('.grid-row');
     if (row && row.dataset.channel) toggleFav(row.dataset.channel);
+  }, true);
+
+  document.addEventListener('click', e => {
+    const btn = e.target && e.target.closest && e.target.closest('.delve-hidebtn');
+    if (!btn) return;
+    if (dragClickPending) return;
+    e.stopPropagation(); e.preventDefault();
+    const row = btn.closest('.grid-row');
+    if (row && row.dataset.channel) toggleHiddenChannel(row.dataset.channel);
   }, true);
 
   // ---------------------------------------------------------------------------
@@ -3937,6 +4044,7 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
       ensureTagTips();
       ensureWatchers();
       ensureGuide();
+      ensureHiddenChannelGuard();
     });
   });
 

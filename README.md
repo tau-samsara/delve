@@ -70,6 +70,10 @@ Every channel in the guide has a star at the left. Click it to mark or unmark a 
 
 ![The Favorites button on, showing only starred channels](images/favorites-filtered.png)
 
+### Hide channels
+
+With **Hide channels** on, every channel gets a small **✕** beside its star. Click it to hide that channel from the guide (it won't tune the channel). The **⊘ Hidden** button in the guide toolbar shows the hidden channels again, dimmed, with a **↺** to bring one back. Hidden channels are skipped: they are not searched; flipping with Channel Up / Down (the buttons or W and S) passes over them; SPELUNK (the button or R) and the Auto spelunk timer never stay on one; and while they are shown dimmed a click on them does nothing except ↺. If you reach a hidden channel some other way (typing its address, for example), the video's stream is removed, so nothing plays.
+
 ### Sort
 
 The **Sort** drop-down in the guide toolbar orders the channels by:
@@ -158,6 +162,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 
 - Program information
 - Favorites
+- Hide channels
 - Sort
 - Search (the SEARCH button and popup)
 - Extended guide (the wider timeline, Window zoom, Now button and Now line)
@@ -186,7 +191,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, the auto spelunk interval and its All channels / Favorites choice, and the feature switches. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, hidden channels, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, the auto spelunk interval and its All channels / Favorites choice, and the feature switches. None of it is sent anywhere.
 
 ## Troubleshooting
 
@@ -206,8 +211,6 @@ Ideas under consideration:
 - A local "tape stack" for bookmarking programs, with personal notes
 - Hotkeys
 - A test pattern screen when a stream fails
-- Start times, past blocks and "late night" labels in the guide
-- A close button or minimal chrome on desktop
 - An ambient screensaver mode
 
 ## License
