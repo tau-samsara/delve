@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.5
+// @version      0.39.6
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2754,10 +2754,12 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
   const STREAM_BUFFER_AHEAD_SEC = 15;
   const STREAM_RETRIES = 2;            // failed range requests retried before the site's own stream takes over
   const STREAM_RETRY_DELAY_MS = 800;
+  const STREAM_SWAP_RETRIES = 3, STREAM_SWAP_RETRY_DELAY_MS = 3000;   // whole swap tried again after the requests kept failing, once the audio graph exists
   const STREAM_FULL_RETRY_MS = 1000;   // wait before appending again to a full buffer
   let audioGraph = null;          // { context, gain }
   let audioStreamUrl = '';        // the archive.org URL being fed through MediaSource, '' when none
   let audioSkippedUrl = '';       // a stream that failed to swap; the site's own playback is restored for it
+  let swapRetries = { url: '', count: 0 };
   let stopAudioStream = () => {};
   let resyncAudioStream = () => {};   // re-applies the audio sync setting to the running stream
   const audioWatchedVideos = new WeakSet();
@@ -3000,9 +3002,18 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
       audioStreamUrl = '';
       stopAudioStream = () => {}; resyncAudioStream = () => {};
     };
-    const fail = reason => {
+    const fail = (reason, networkFailure) => {
       if (stopped) return;
+      const staleObjectUrl = objectUrl;
       stop();
+      if (networkFailure && audioGraph) {   // the graph would play the site's own stream as silence, so try the swap again first
+        if (swapRetries.url !== url) swapRetries = { url, count: 0 };
+        if (++swapRetries.count <= STREAM_SWAP_RETRIES) {
+          console.warn('[delve] ' + reason + '; trying the stream again (' + swapRetries.count + ' of ' + STREAM_SWAP_RETRIES + ')');
+          setTimeout(() => { if (video.src === staleObjectUrl && !audioStreamUrl) startAudioStream(video, url); }, STREAM_SWAP_RETRY_DELAY_MS);
+          return;
+        }
+      }
       console.warn('[delve] ' + reason + '; Audio tweaks unavailable for this stream');
       audioSkippedUrl = url;
       video.src = url;
@@ -3038,7 +3049,7 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
     };
 
     const retryChunk = reason => {
-      if (++failedRequests > STREAM_RETRIES) { fail(reason); return; }
+      if (++failedRequests > STREAM_RETRIES) { fail(reason, true); return; }
       const timer = setTimeout(() => { request = null; fetchNextChunk(); }, STREAM_RETRY_DELAY_MS);
       request = { abort: () => clearTimeout(timer) };   // holds off new requests while waiting
     };
@@ -3135,7 +3146,7 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
       fetchNextChunk();
     };
     video.addEventListener('seeking', onSeeking);
-    const onLoaded = () => ensureAudioGraph(video);   // not before: a swapped video that can't play must still fall back to the site's stream
+    const onLoaded = () => { swapRetries = { url: '', count: 0 }; ensureAudioGraph(video); };   // graph not before: a swapped video that can't play must still fall back to the site's stream
     const onVideoError = () => fail('browser could not play the stream (' + (video.error && video.error.message) + ')');
     video.addEventListener('loadeddata', onLoaded, { once: true });
     video.addEventListener('error', onVideoError);

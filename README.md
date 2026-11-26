@@ -148,7 +148,7 @@ All of these are remembered, and they apply to every channel: Delve does not res
 - Channels whose files store the index at the end (very large files) can take a little longer to start.
 - A failed request is retried twice. If a stream still can't be played this way, the site plays it as before, and the audio tweaks do nothing for that stream.
 - Once a stream has been swapped, switching Audio tweaks off keeps the swap until you reload the page, with the boost back at 100%.
-- If a stream can't be swapped *after* another channel has already been, the browser plays it silent until you reload the page.
+- If a stream can't be swapped *after* another channel has already been, the browser plays it silent until you reload the page. When the cause is the connection (the download kept failing), Delve first tries the swap again up to three times, about three seconds apart, with the picture blank meanwhile, and only then gives up.
 
 ### Updates
 

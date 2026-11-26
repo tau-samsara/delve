@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.6 - 2026-11-26
+- Audio tweaks: when a channel's video fails to download after another channel has already been played through Delve, Delve now tries again up to three times (about three seconds apart) instead of going straight to a silent video. The picture stays blank while it retries.
+
 ## 0.39.5 - 2026-11-25
 - Audio tweaks: the video player no longer keeps every piece of the file it has downloaded in memory. Rewinding around a long video used to add a little memory each time; now it stays small.
 
