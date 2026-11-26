@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.3 - 2026-11-25
+- The page no longer shifts sideways by a few pixels when you switch between Guide, Watch and Channel: the room for the page's scrollbar is always kept, so the Guide view now shows a thin empty strip on the right.
+
 ## 0.39.2 - 2026-11-25
 - On a phone, the SCHEDULE page's top links (About, Updates, Directory, Schedule, App, DELVE) no longer leave APP and DELVE stuck at the left edge when they wrap to a second row; both rows now line up on the right.
 

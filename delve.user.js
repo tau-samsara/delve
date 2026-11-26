@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.2
+// @version      0.39.3
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -288,6 +288,8 @@ ${L} .app--guide .grid-row.active .grid-channel-num::after { content: ' \\25B6';
 ${L} .app--guide .prevue-header-clock { white-space: nowrap; }
 /* Only guide view, watch mode and channel mode (.app--watch.app--channel), not the other pages. */
 ${L} .app--guide *, ${L} .app--watch * { scrollbar-width: thin; }
+/* Default layout: keep the page scrollbar's room so the width does not jump between Guide, Watch and Channel (T1). */
+html:not([data-delve-layout]):has(.app--guide, .app--watch) { scrollbar-gutter: stable; }
 ${L} .app--guide ::-webkit-scrollbar, ${L} .app--watch ::-webkit-scrollbar { width: 10px; height: 10px; }
 ${L} .app--guide ::-webkit-scrollbar-track, ${L} .app--watch ::-webkit-scrollbar-track { background: transparent; }
 
