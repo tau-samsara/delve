@@ -64,7 +64,7 @@ Click the same program a second time to tune the preview to it. **<< Now Playing
 
 ### Favorites
 
-Every channel in the guide has a star at the left. Click it to mark or unmark a channel (it won't tune the channel). Use the **★ Favorites** button in the guide toolbar to show only your favorites.
+Every channel in the guide has a star at the left. Click it to mark or unmark a channel (it won't tune the channel). On a channel's own page a **FAVORITE** button (gold while the channel is starred) sits above the WATCH and GUIDE buttons. Use the **★ Favorites** button in the guide toolbar to show only your favorites.
 
 ![Starred channels in the guide](images/favorites.png)
 
@@ -72,7 +72,7 @@ Every channel in the guide has a star at the left. Click it to mark or unmark a 
 
 ### Hide channels
 
-With **Hide channels** on, every channel gets a small **✕** beside its star. Click it to hide that channel from the guide (it won't tune the channel). The **⊘ Hidden** button in the guide toolbar shows the hidden channels again, dimmed, with a **↺** to bring one back. Hidden channels are skipped: they are not searched; flipping with Channel Up / Down (the buttons or W and S) passes over them; SPELUNK (the button or R) and the Auto spelunk timer never stay on one; and while they are shown dimmed a click on them does nothing except ↺. If you reach a hidden channel some other way (typing its address, for example), the video's stream is removed, so nothing plays.
+With **Hide channels** on, every channel gets a small **✕** beside its star. Click it to hide that channel from the guide (it won't tune the channel). The **⊘ Hidden** button in the guide toolbar shows the hidden channels again, dimmed, with a **↺** to bring one back. Hidden channels are skipped: they are not searched; flipping with Channel Up / Down (the buttons or W and S) passes over them; SPELUNK (the button or R) and the Auto spelunk timer never stay on one; and while they are shown dimmed a click on them does nothing except ↺. If you reach a hidden channel some other way (typing its address, for example), the video's stream is removed, so nothing plays. On a channel's own page a **HIDE CHANNEL** button above WATCH and GUIDE hides it (the stream is removed at once); the same button, now **UNHIDE CHANNEL**, brings it back.
 
 ### Sort
 

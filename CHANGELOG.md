@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.1 - 2026-11-25
+- Channel pages: when Favorites or Hide channels is on, a FAVORITE button and a HIDE CHANNEL button sit in their own row above WATCH and GUIDE. FAVORITE turns gold while the channel is starred, and HIDE CHANNEL becomes UNHIDE CHANNEL once it is hidden.
+
 ## 0.39.0 - 2026-11-25
 - Hide channels: a new Guide switch. Every channel gets a ✕ beside its star that hides it from the guide, and a ⊘ Hidden button in the toolbar shows hidden channels again, dimmed, with a ↺ to bring one back.
 - Hidden channels are skipped: Search leaves them out, Channel Up and Down (buttons or W and S) pass over them, SPELUNK, R and the Auto spelunk timer never stay on one, and clicking a dimmed channel does nothing. If you land on one another way, its stream is removed so nothing plays.

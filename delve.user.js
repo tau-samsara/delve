@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.0
+// @version      0.39.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1481,6 +1481,9 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-time-header { order: -1; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-hide] { display: none !important; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-dim] { opacity: .45; }
+.delve-chan-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+.delve-chan-actions button { flex: 1 1 0; }
+.delve-chan-actions [hidden] { display: none; }
 .delve-star, .delve-hidebtn { flex: 0 0 auto; align-self: center; width: 16px; height: 28px; margin: 0 0 0 -2px; padding: 0; border: 0; background: transparent; cursor: pointer; font-size: 16px; line-height: 28px; color: inherit; opacity: .35; }
 .delve-star:hover, .delve-hidebtn:hover { opacity: 1; }
 .delve-star.on { opacity: 1; color: var(--8s-yellow, #ffd740); }
@@ -3841,8 +3844,42 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
     setTimeout(() => { if (currentChannelId() === channel) lastFlip = null; }, 1500);   // the repeat did not move: stop trying
   }
 
+  // Channel page: a Favorite and a Hide button in their own row above the site's WATCH / GUIDE row.
+  function ensureChannelActions() {
+    const wanted = settings.favoritesOn || settings.hideChannelsOn;
+    const siteKeys = document.querySelector('.app--channel .cv-hero > .cv-keys');
+    let actions = document.querySelector('.delve-chan-actions');
+    if (!wanted || !siteKeys) {
+      if (wanted && document.querySelector('.app--channel')) warnMissing('.cv-hero > .cv-keys', 'Favorites and Hide channels on the channel page');
+      if (actions) actions.remove();
+      return;
+    }
+    if (!actions) {
+      actions = el('div', 'delve-chan-actions');
+      const favorite = el('button', 'bbtn');
+      favorite.type = 'button';
+      favorite.addEventListener('click', () => toggleFav(currentChannelId()));
+      const hide = el('button', 'bbtn bbtn-outline');
+      hide.type = 'button';
+      hide.addEventListener('click', () => toggleHiddenChannel(currentChannelId()));
+      actions.append(favorite, hide);
+    }
+    if (siteKeys.previousElementSibling !== actions) siteKeys.before(actions);
+    const channel = currentChannelId();
+    const [favorite, hide] = actions.children;
+    favorite.hidden = !settings.favoritesOn;
+    hide.hidden = !settings.hideChannelsOn;
+    const fav = isFav(channel), hidden = isHiddenChannel(channel);
+    favorite.className = fav ? 'bbtn bbtn-gold' : 'bbtn bbtn-outline';
+    favorite.setAttribute('aria-pressed', String(fav));
+    if (favorite.textContent !== 'FAVORITE') favorite.textContent = 'FAVORITE';
+    const hideText = hidden ? 'UNHIDE CHANNEL' : 'HIDE CHANNEL';
+    if (hide.textContent !== hideText) hide.textContent = hideText;
+  }
+
   let knownChannelIds = [];
   function ensureGuide() {
+    ensureChannelActions();
     const siteChannels = Array.from(document.querySelectorAll('.tv-grid > .tv-grid-body > .grid-row'), row => row.dataset.channel).filter(Boolean);
     if (siteChannels.length) knownChannelIds = siteChannels;
     ensureBar();
