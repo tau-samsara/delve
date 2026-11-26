@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.4 - 2026-11-25
+- Extended guide: the hour labels (like 11:00 PM) are no longer hidden by the playhead when the current time is close to the hour; they sit on top of it with a thin dark outline.
+
 ## 0.39.3 - 2026-11-25
 - The page no longer shifts sideways by a few pixels when you switch between Guide, Watch and Channel: the room for the page's scrollbar is always kept, so the Guide view now shows a thin empty strip on the right.
 

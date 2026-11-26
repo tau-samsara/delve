@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.3
+// @version      0.39.4
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2415,6 +2415,8 @@ html[data-delve-pan] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
 .delve-now { animation: delve-now-glow 2.4s ease-in-out infinite; }
 /* The playhead: an upside-down pentagon in the hour row, its point touching the line below. */
 .delve-now-tag { position: absolute; bottom: 0; width: 16px; height: 16px; margin-left: -8px; z-index: 4; pointer-events: none; background: var(--8s-yellow, #ffd740); clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%); }
+/* Hour labels stay readable when the playhead passes over them (M1). */
+.delve-wide-body .grid-time-axis .grid-time-label { z-index: 5; text-shadow: -1px 0 #000, 1px 0 #000, 0 -1px #000, 0 1px #000, 0 0 3px #000; }
 `;
   let nowEl = null, nowTag = null;
 
