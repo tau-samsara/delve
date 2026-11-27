@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.11 - 2026-11-26
+- Picture tweaks in the guide: a zoomed or shifted picture could spill out of the guide's video box and cover the channel title and description beside it. It now stays inside its box, as it does in Watch mode.
+
 ## 0.39.10 - 2026-11-26
 - Hide options: the Reactions and Both choices now also hide the hearts that float up over the video, not only the reaction bar under it.
 

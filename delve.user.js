@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.10
+// @version      0.39.11
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2637,7 +2637,7 @@ html[data-delve-theater-idle] #delve-theater-exit { opacity: 0; pointer-events: 
 `;
   const PICTURE_CSS = `
 html[data-delve-picture] video { filter: var(--delve-picture-filter); translate: var(--delve-picture-align); scale: calc(var(--delve-picture-scale-x) * var(--delve-picture-crop-scale, 1)) calc(var(--delve-picture-scale-y) * var(--delve-picture-crop-scale, 1)); clip-path: var(--delve-picture-crop-clip, none); }
-html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow: hidden; }
+html[data-delve-picture] :is(.app--watch .stage--watch, .app--guide .stage--guide) .stage-video-wrap { overflow: hidden; }
 .delve-picture-panel[hidden] { display: none; }
 /* Panel, heading and button come from the site's CRT/ZZZ popups (cc-panel); only the slider sizing is ours. */
 .delve-picture-ctl .delve-picture-panel { width: 240px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
