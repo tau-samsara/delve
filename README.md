@@ -1,8 +1,6 @@
 # Delve
 
-Quality-of-life tools for [Spelunkr](https://spelunkr.tv/). Delve is a userscript that adds a few things the site doesn't have yet: more ways to lay out the guide, program info on click, favorites, sorting, a scrollable multi-day guide, a remembered volume, and audio tweaks (volume boost, leveling, night mode, hiss reduction, mono and sync).
-
-It uses the site's own fonts, colors and buttons, so it looks like part of the site.
+Quality-of-life tools for [Spelunkr](https://spelunkr.tv/). Delve is a userscript that adds things the site doesn't have yet: more ways to lay out the guide, program info on click, favorites, sorting, a scrollable multi-day guide, picture and audio tweaks, and more. It uses the site's own fonts, colors and buttons, so it looks like part of the site.
 
 ![Delve's Wide view of the Spelunkr guide](images/guide-wide.png)
 
@@ -19,17 +17,38 @@ It uses the site's own fonts, colors and buttons, so it looks like part of the s
 
 Installing from that link also turns on automatic updates: Tampermonkey checks for new versions on its own (daily by default). If you pasted the script in by hand instead, it won't update itself.
 
-The script only runs on `spelunkr.tv`. It makes these outside requests: to `data.spelunkr.tv`, the site's own data host, to look up program descriptions; to `raw.githubusercontent.com`, about once an hour, to read the published version number, and again to read the changelog when you open **What's new**; and, only with Audio tweaks on, to `archive.org`, where the streams live. Audio tweaks also loads the MP4Box library from `cdn.jsdelivr.net` (pinned to one version and checked against a hash by Tampermonkey).
+### What it connects to
 
-## Opening the menu
+The script only runs on `spelunkr.tv`. Outside requests:
+
+| Host | Why | When |
+|---|---|---|
+| `data.spelunkr.tv` | Program descriptions (the site's own data host) | When you look up a program |
+| `raw.githubusercontent.com` | The published version number, and the changelog | About once an hour; the changelog when you open **What's new** |
+| `archive.org` | The video streams | Only with Audio tweaks on |
+| `cdn.jsdelivr.net` | The MP4Box library (pinned to one version and checked against a hash by Tampermonkey) | Only with Audio tweaks on |
+
+## The DELVE menu
 
 Click **DELVE** in the top bar (at the far right, after the clock). It's on every page of the site; on the landing page it sits with the Directory, About and Updates links. A drawer slides in from the right. Click anywhere outside it, or the **✕**, to close it. The drawer also closes when you go to another page.
 
 The drawer has three groups: **Layout**, **Guide** and **Player**. Click a group's arrow to fold or unfold it; the drawer remembers which are folded. The title and the footer stay in place while the list scrolls. **Reset all settings** in the footer puts every setting back to its default, including your favorites and remembered volume; click it twice to confirm.
 
+Every feature has an On/Off switch and is **off by default**.
+
 ![The DELVE drawer](images/drawer.png)
 
 ## Features
+
+| Group | Feature |
+|---|---|
+| Layout | [View type](#view-type) |
+| Guide | [Program information](#program-information) · [Favorites](#favorites) · [Hide channels](#hide-channels) · [Sort](#sort) · [Search](#search) · [Extended guide](#extended-guide) · [24-hour clock](#24-hour-clock) · [Tag tooltips](#tag-tooltips) · [Watcher count](#watcher-count) |
+| Player | [Theater mode](#theater-mode) · [Picture tweaks](#picture-tweaks) · [Audio tweaks](#audio-tweaks) · [Hide options](#hide-options) · [Watermark](#watermark) · [Volume slider](#volume-slider) · [Auto spelunk](#auto-spelunk) |
+
+Two things work without a switch: [volume and mute](#volume-and-mute) and [updates](#updates).
+
+## Layout
 
 ### View type
 
@@ -48,7 +67,9 @@ Changes how the guide page is arranged. Pick one in the drawer:
 
 Wide and Split also apply to watch mode and channel mode, with smooth transitions between modes. In watch mode, Wide puts the guide below the video; Split puts the video on one half and the guide on the other, with no page scrolling. On phone-width windows (768 px and under) the site's own single-column layout is used and Delve steps aside.
 
-### Program info
+## Guide
+
+### Program information
 
 Click a program in the guide to see its details in the info column under the video, without changing what's playing:
 
@@ -72,7 +93,16 @@ Every channel in the guide has a star at the left. Click it to mark or unmark a 
 
 ### Hide channels
 
-With **Hide channels** on, every channel gets a small **✕** beside its star. Click it to hide that channel from the guide (it won't tune the channel). The **⊘ Hidden** button in the guide toolbar shows the hidden channels again, dimmed, with a **↺** to bring one back. Hidden channels are skipped: they are not searched; flipping with Channel Up / Down (the buttons or W and S) passes over them; SPELUNK (the button or R) and the Auto spelunk timer never stay on one; and while they are shown dimmed a click on them does nothing except ↺. If you reach a hidden channel some other way (typing its address, for example), the video's stream is removed, so nothing plays. On a channel's own page a **HIDE CHANNEL** button above WATCH and GUIDE hides it (the stream is removed at once); the same button, now **UNHIDE CHANNEL**, brings it back.
+Every channel gets a small **✕** beside its star. Click it to hide that channel from the guide (it won't tune the channel). The **⊘ Hidden** button in the guide toolbar shows the hidden channels again, dimmed, with a **↺** to bring one back.
+
+Hidden channels are skipped:
+
+- They are not searched.
+- Flipping with Channel Up / Down (the buttons or W and S) passes over them.
+- SPELUNK (the button or R) and the Auto spelunk timer never stay on one.
+- While shown dimmed, a click on them does nothing except ↺.
+
+If you reach a hidden channel some other way (typing its address, for example), the video's stream is removed, so nothing plays. On a channel's own page a **HIDE CHANNEL** button above WATCH and GUIDE hides it (the stream is removed at once); the same button, now **UNHIDE CHANNEL**, brings it back.
 
 ### Sort
 
@@ -112,15 +142,48 @@ Turns the guide into a long, sideways-scrolling timeline that shows programs tha
 
 ![The extended guide with the Now line and Window controls](images/extended-guide.png)
 
-### Volume and mute
+### 24-hour clock
 
-- Your volume is remembered between visits.
-- Whether you left the video muted is remembered too. If you left it unmuted, the first click or key press on the page unmutes it (browsers don't allow sound before that).
-- A mute button is added to the guide's controls when the site hasn't drawn its own.
+The header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text.
+
+### Tag tooltips
+
+Hovering the REWIND tag in the guide explains it: original broadcasts, with commercials, variety programming and whole blocks.
+
+### Watcher count
+
+The total number of people watching, copied from the site's own figure: a badge to the right of the header clock and a Watching card on the home page. The home page does not load the figure itself, so its card appears once the guide or a channel has been open since the page loaded. Off-screen on a phone, where the header has no room.
+
+## Player
+
+### Theater mode
+
+A **THEATER** button in the player's key row, in watch and channel mode. The video fills the whole window on black, with no header, guide or footer; the player's key row sits over the bottom of the picture, so PICTURE and the other buttons still work.
+
+**EXIT THEATER** in the top right corner goes back, and so does leaving the watch view. Changing channel keeps theater mode on. After 3 seconds without mouse movement the exit button fades, the key row slides down out of view and the mouse pointer hides; moving the mouse brings them back. Theater mode is not remembered between visits.
+
+![Theater mode with the key row over the picture](images/theater.png)
+
+### Picture tweaks
+
+A **PICTURE** button in the player's key row, in watch and channel mode, opens a panel. The video changes as you drag, in every view. Click elsewhere to close. The settings are remembered.
+
+| Control | Range |
+|---|---|
+| **Brightness**, **Contrast** | 50% to 150% |
+| **Saturation** | 0% to 200% |
+| **Dim** | 0% to 90% toward black |
+| **Zoom** | 50% to 150% |
+| **Width**, **Height** | 50% to 150% each, stretching one direction only |
+| **Left / right**, **Up / down** | Up to 25% either way, like a TV's overscan: the picture moves, the far edge is cut off and black shows on the other side |
+| **Crop** | Off, 4:3, 16:9 or 21:9: the largest box of that shape that fits the player, centered |
+| **Crop fit** | **Fill** scales the picture to the box, cutting what overflows; **Fit** scales it to fit inside, cutting nothing |
+
+![The PICTURE panel](images/picture-panel.png)
 
 ### Audio tweaks
 
-Switch on **Audio tweaks** in the drawer. An **AUDIO** button appears just left of the mute button in watch and channel mode. It opens a panel, from top to bottom:
+An **AUDIO** button appears just left of the mute button in watch and channel mode. It opens a panel, from top to bottom:
 
 ![The AUDIO panel](images/audio-panel.png)
 
@@ -150,44 +213,55 @@ All of these are remembered, and they apply to every channel: Delve does not res
 - Once a stream has been swapped, switching Audio tweaks off keeps the swap until you reload the page, with the boost back at 100%.
 - If a stream can't be swapped *after* another channel has already been, the browser plays it silent until you reload the page. When the cause is the connection (the download kept failing), Delve first tries the swap again up to three times, about three seconds apart, with the picture blank meanwhile, and only then gives up.
 
+### Hide options
+
+The site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**:
+
+- **Comments** hides the comment markers on the scrub bar and the comment pop-ups on the video.
+- **Reactions** hides the reaction strip on the scrub bar and the hearts that float up over the video.
+- **Both** hides all of them.
+
+The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row.
+
+![The HIDE popup](images/hide-popup.png)
+
+### Watermark
+
+A **WATERMARK** button in the player's key row opens a popup that puts the channel's logo over a corner of the visible picture, not over the black bars. With Picture tweaks on, the corner is that of the picture where it meets the Crop box, after Zoom and alignment.
+
+- **On/Off** (the watermark is Off until you turn it on in the popup)
+- **Size**: 4% to 20% of the visible picture's height
+- **Opacity**: 1% to 20%, in 1% steps
+- **Corner**
+- **Logo**: Original, or **B&W** (the logo without its background, drawn in white and grays)
+
+The settings are remembered.
+
+![The WATERMARK popup, with the logo at the top left of the picture](images/watermark-popup.png)
+
+### Volume slider
+
+In the guide's compact player the site shows no volume slider. With this on, hovering the mute button opens a small volume slider above it, and it closes when the pointer leaves. Moving the slider changes the volume only; it does not mute or unmute.
+
+### Auto spelunk
+
+An **AUTO** button next to the site's SPELUNK button opens a popup: **Off**, **15 s**, **30 s**, **1 min** or **5 min**. Pick an interval and Delve presses SPELUNK for you each time the countdown shown on the AUTO button reaches zero, so you land on a new random channel. Pressing SPELUNK yourself restarts the countdown. The chosen interval is remembered, so auto spelunk carries on after you reload.
+
+The popup's **Spelunk among** row switches between **All channels** and **★ Favorites**. With Favorites, both SPELUNK and the timer jump to a random starred channel other than the one you are on. The row only shows while the Favorites switch is on; with Favorites off, SPELUNK and the timer never pick from your stars. If you have no other starred channel, SPELUNK does its usual random jump.
+
+## Always on
+
+### Volume and mute
+
+- Your volume is remembered between visits.
+- Whether you left the video muted is remembered too. If you left it unmuted, the first click or key press on the page unmutes it (browsers don't allow sound before that).
+- A mute button is added to the guide's controls when the site hasn't drawn its own.
+
 ### Updates
 
 About once an hour Delve reads the version number of the published script on GitHub. When a newer one exists, the DELVE button pulses with a gold glow. The bottom of the menu shows the installed version and a button. When an update is available it reads **Update Available** (gold) and opens the script so Tampermonkey can install it; otherwise it reads **Check for Updates** and checks GitHub right away.
 
 **What's new** (below the update button) opens a popup with the changelog: what changed in each version, newest first. It is read from `CHANGELOG.md` on GitHub when you open it, so it also lists versions you haven't installed yet. The same file is in the repository.
-
-### Turning features on
-
-The drawer has an On/Off switch for each of these. They are all **off by default**, so turn on the ones you want:
-
-- Program information
-- Favorites
-- Hide channels
-- Sort
-- Search (the SEARCH button and popup)
-- Extended guide (the wider timeline, Window zoom, Now button and Now line)
-- Theater mode (a THEATER button in the player's key row, in watch and channel mode: the video fills the whole window on black, with no header, guide or footer; the player's key row sits over the bottom of the picture, so PICTURE and the other buttons still work. **EXIT THEATER** in the top right corner goes back, and so does leaving the watch view; changing channel keeps theater mode on. After 3 seconds without mouse movement the exit button fades, the key row slides down out of view and the mouse pointer hides; moving the mouse brings them back. Not remembered between visits)
-
-![Theater mode with the key row over the picture](images/theater.png)
-
-- 24-hour clock (the header clock, guide time labels, Up Next times, marathon tooltips and Delve's program card show 19:00 instead of 7:00 PM. Switching it off restores the original text)
-- Tag tooltips (hovering the REWIND tag in the guide explains it: original broadcasts, with commercials, variety programming and whole blocks)
-- Watcher count (the total number of people watching, copied from the site's own figure: a badge to the right of the header clock and a Watching card on the home page. The home page does not load the figure itself, so its card appears once the guide or a channel has been open since the page loaded. Off-screen on a phone, where the header has no room)
-- Audio tweaks (an AUDIO button, just left of the mute button in watch and channel mode, opens the audio panel; see [Audio tweaks](#audio-tweaks) above)
-- Picture tweaks (a PICTURE button in the player's key row, in watch and channel mode, opens a panel with sliders for **Brightness** and **Contrast** (50% to 150%), **Saturation** (0% to 200%), **Dim** (0% to 90% toward black), **Zoom** (50% to 150%) and **Width** and **Height** (50% to 150% each, stretching one direction only) and **Left / right** and **Up / down** alignment (up to 25% either way, like a TV's overscan: the picture moves, the far edge is cut off and black shows on the other side), plus **Crop** (Off, 4:3, 16:9 or 21:9: the largest box of that shape that fits the player, centered; **Crop fit** chooses whether the picture is scaled to **Fill** the box, cutting what overflows, or to **Fit** inside it, cutting nothing). The video changes as you drag, in every view. Click elsewhere to close. The settings are remembered.)
-
-![The PICTURE panel](images/picture-panel.png)
-
-- Hide options (the site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**. Comments hides the comment markers on the scrub bar and the comment pop-ups on the video; Reactions hides the reaction strip on the scrub bar and the hearts that float up over the video; Both hides all of them. The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row)
-
-![The HIDE popup](images/hide-popup.png)
-
-- Watermark (a WATERMARK button in the player's key row opens a popup that puts the channel's logo over a corner of the visible picture, not over the black bars. With Picture tweaks on, the corner is that of the picture where it meets the Crop box, after Zoom and alignment. **On/Off**, **Size** (4% to 20% of the visible picture's height), **Opacity** (1% to 20%, in 1% steps), **Corner** and **Logo** (Original, or **B&W**: the logo without its background, drawn in white and grays). The watermark is Off until you turn it on in the popup. The settings are remembered)
-
-![The WATERMARK popup, with the logo at the top left of the picture](images/watermark-popup.png)
-
-- Volume slider (in the guide's compact player the site shows no volume slider. With this on, hovering the mute button opens a small volume slider above it, and it closes when the pointer leaves. Moving the slider changes the volume only; it does not mute or unmute)
-- Auto spelunk (an AUTO button next to the site's SPELUNK button opens a popup: **Off**, **15 s**, **30 s**, **1 min** or **5 min**. Pick an interval and Delve presses SPELUNK for you each time the countdown shown on the AUTO button reaches zero, so you land on a new random channel. Pressing SPELUNK yourself restarts the countdown. The chosen interval is remembered, so auto spelunk carries on after you reload. The popup's **Spelunk among** row switches between **All channels** and **★ Favorites**: with Favorites, both SPELUNK and the timer jump to a random starred channel other than the one you are on. The row only shows while the Favorites switch is on; with Favorites off, SPELUNK and the timer never pick from your stars. If you have no other starred channel, SPELUNK does its usual random jump)
 
 ## Your settings
 
@@ -206,11 +280,13 @@ Everything is saved by Tampermonkey, in your browser, and kept between visits: v
 
 Ideas under consideration:
 
-- CRT display options (scanlines, bezels, stretch, crop, zoom)
+- A CRT look (scanlines, grain, glow, bezels)
 - More themes
 - A local "tape stack" for bookmarking programs, with personal notes
 - Hotkeys
 - A test pattern screen when a stream fails
+- A cleaner or more customizable guide
+- Skipping TV-MA programs when flipping channels, unless you opt in
 - An ambient screensaver mode
 
 ## License
