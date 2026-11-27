@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.12 - 2026-11-26
+- Hide channels on the guide: the small video at the top of the guide no longer plays a hidden channel. If the page opens on one, the video stays blank, and the Channel Up and Down buttons (and the W, S and R keys) skip hidden channels there, as they already did on the Watch and Channel pages.
+
 ## 0.39.11 - 2026-11-26
 - Picture tweaks in the guide: a zoomed or shifted picture could spill out of the guide's video box and cover the channel title and description beside it. It now stays inside its box, as it does in Watch mode.
 

@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.11
+// @version      0.39.12
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -3555,12 +3555,14 @@ html[data-delve-hide-reactions] :is(.reaction-heat, .reaction-animator) { displa
     if (autoSpelunkPanel && !autoSpelunkPanel.hidden && !e.target.closest('.delve-auto-ctl')) setAutoSpelunkPanelOpen(false);
   }, true);
   const currentChannelId = () => location.pathname.split('/')[1];
+  // On the guide the address has no channel; the preview's channel is the highlighted row.
+  const playingChannelId = () => currentChannelId() || document.querySelector('.tv-grid > .tv-grid-body > .grid-row.highlighted')?.dataset.channel || '';
   const hiddenChannelIds = () => settings.hideChannelsOn ? settings.hiddenChannels : [];
   function randomSpelunkChannel() {
     const favoritesOnly = settings.autoSpelunkOn && settings.favoritesOn && settings.spelunkFavoritesOnly;
     const hidden = hiddenChannelIds();
     const pool = favoritesOnly ? settings.favorites : hidden.length ? knownChannelIds : [];
-    const others = pool.filter(channel => channel !== currentChannelId() && hidden.indexOf(channel) === -1);
+    const others = pool.filter(channel => channel !== playingChannelId() && hidden.indexOf(channel) === -1);
     return others[Math.floor(Math.random() * others.length)];
   }
   const tuneChannel = channel => {
@@ -3880,7 +3882,7 @@ html[data-delve-hide-reactions] :is(.reaction-heat, .reaction-animator) { displa
       guardedVideos.add(video);
       new MutationObserver(ensureHiddenChannelGuard).observe(video, { attributes: true, attributeFilter: ['src'] });
     }
-    const channel = currentChannelId();
+    const channel = playingChannelId();
     if (!settings.hideChannelsOn || hiddenChannelIds().indexOf(channel) === -1) { repeatedOn = ''; return; }
     if (video && video.getAttribute('src')) { video.pause(); video.removeAttribute('src'); video.load(); }
     if (!lastFlip || flipRepeatsLeft <= 0 || Date.now() - lastFlip.at > FLIP_FRESH_MS || repeatedOn === channel) return;
@@ -3888,7 +3890,7 @@ html[data-delve-hide-reactions] :is(.reaction-heat, .reaction-animator) { displa
     flipRepeatsLeft--;
     repeatingFlip = true;
     try { lastFlip.repeat(); } finally { repeatingFlip = false; }
-    setTimeout(() => { if (currentChannelId() === channel) lastFlip = null; }, 1500);   // the repeat did not move: stop trying
+    setTimeout(() => { if (playingChannelId() === channel) lastFlip = null; }, 1500);   // the repeat did not move: stop trying
   }
 
   // Channel page: a Favorite and a Hide button in their own row above the site's WATCH / GUIDE row.
