@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.7
+// @version      0.39.8
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2764,6 +2764,7 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
   const AUDIO_CSS = `
 .delve-audio-panel[hidden] { display: none; }
 .delve-audio-ctl .delve-audio-panel { width: 300px; max-width: calc(100vw - 40px); left: 0; right: auto; transform: none; }
+@media (max-width: 480px) { :root .delve-audio-ctl .delve-audio-panel { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); max-height: calc(100vh - 40px); overflow-y: auto; } }
 .delve-audio-panel .delve-seg { gap: 4px; }
 :root .delve-audio-panel .delve-seg button { padding-left: 2px; padding-right: 2px; letter-spacing: 0; font-size: 16px; }
 .delve-audio-panel .cc-panel-head { display: flex; justify-content: space-between; text-align: left; }

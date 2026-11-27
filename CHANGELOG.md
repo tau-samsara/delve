@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.8 - 2026-11-26
+- Audio panel on a phone: the panel was cut off at the top of the screen. It now opens in the middle of the screen like the Picture, Watermark and Hide panels; tap outside it to close.
+
 ## 0.39.7 - 2026-11-26
 - Watermark and Picture panels: on a narrower window the panel could be cut off at the left edge of the video. It now slides in to stay fully visible, and the Picture panel scrolls if there is not enough room above its button.
 
