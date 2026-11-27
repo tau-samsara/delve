@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.8
+// @version      0.39.9
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2627,8 +2627,8 @@ html[data-delve-theater] { overflow: hidden !important; }
 html[data-delve-theater] .app--watch .stage--watch { position: fixed !important; inset: 0 !important; z-index: 9000 !important; width: auto !important; height: auto !important; max-height: none !important; margin: 0 !important; padding: 0 !important; background: #000; transition: none !important; }
 html[data-delve-theater] .app--watch .stage--watch .stage-video-col { position: relative; height: 100%; padding: 0 !important; box-shadow: none !important; }
 html[data-delve-theater] .app--watch .stage--watch .stage-video-wrap { height: 100%; padding-top: 0 !important; }
-html[data-delve-theater] .app--watch .stage--watch .stage-keys { display: block !important; position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; background: rgba(0, 0, 0, .6); transition: transform .3s; }
-html[data-delve-theater] .app--watch .stage--watch :is(.stage-player-header, .stage-player-info) { display: none !important; }
+html[data-delve-theater] .app--watch .stage--watch .stage-keys { display: block !important; height: auto !important; max-height: none !important; position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; background: rgba(0, 0, 0, .6) !important; transition: transform .3s; }
+html[data-delve-theater] .app--watch .stage--watch :is(.stage-player-header, .stage-player-info, .stage-visit-channel) { display: none !important; }
 #delve-theater-exit { position: absolute; top: 8px; right: 8px; z-index: 30; opacity: .6; transition: opacity .3s; }
 #delve-theater-exit:hover, #delve-theater-exit:focus-visible { opacity: 1; }
 html[data-delve-theater-idle] .app--watch .stage--watch, html[data-delve-theater-idle] .app--watch .stage--watch * { cursor: none !important; }

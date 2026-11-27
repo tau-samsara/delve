@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.9 - 2026-11-26
+- Theater mode on a phone: the row of buttons ran off the bottom of the screen, so SPELUNK and MORE could not be reached, and the page's own Guide / Watch / Channel bar showed through behind it. The row now fits on the screen and that bar is hidden in Theater.
+
 ## 0.39.8 - 2026-11-26
 - Audio panel on a phone: the panel was cut off at the top of the screen. It now opens in the middle of the screen like the Picture, Watermark and Hide panels; tap outside it to close.
 
