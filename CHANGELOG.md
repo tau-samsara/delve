@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.13 - 2026-11-26
+- Audio sync: the slider no longer restarts the stream on every small step. The stream reloads once when you let go of the slider, or after a short pause.
+
 ## 0.39.12 - 2026-11-26
 - Fixed: Hide channels now also applies to the guide's small video. It no longer plays a hidden channel, and Channel Up/Down (including W, S and R) skip hidden channels there.
 

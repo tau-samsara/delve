@@ -131,7 +131,7 @@ Switch on **Audio tweaks** in the drawer. An **AUDIO** button appears just left 
 | **Night mode** | Compresses the sound: loud moments are pulled down toward the quiet ones, so you can keep the volume low without losing the dialogue. |
 | **Hiss reduction** | Turns the highs above 6 kHz down by 6 dB, which softens tape and stream hiss. It also makes everything sound a little duller. |
 | **Mono** | A row of five choices: **Off**, **Auto**, **Left**, **Mix**, **Right**. Left or Right plays that channel in both ears and Mix plays both mixed (at half level), for files with sound in one ear only. |
-| **Audio sync** | -1000 to +1000 ms. Minus plays the sound earlier, plus later, for sources whose sound is out of step with the picture. Moving it reloads the buffer, so the video stalls for a second. |
+| **Audio sync** | -1000 to +1000 ms. Minus plays the sound earlier, plus later, for sources whose sound is out of step with the picture. The buffer reloads once you let go of the slider (or pause for a moment), so the video stalls for a second per adjustment, not per step. |
 
 **Auto** (in the Mono row) listens for about ten seconds of sound and then picks for you:
 

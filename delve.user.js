@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.12
+// @version      0.39.13
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -120,6 +120,7 @@
   const HIDE_MODES = [['off', 'Off'], ['both', 'Both'], ['comments', 'Comments'], ['reactions', 'Reactions']];
   const BOOST_RANGE = { min: 100, max: 300, step: 5 };
   const SYNC_RANGE = { min: -1000, max: 1000, step: 10 };   // ms
+  const SYNC_IDLE_MS = 1500;   // pause in slider input after which the stream is refetched
   const LEVEL_RANGE = { min: -30, max: -16, step: 1 };
   const MONO_SOURCES = [['left', 'Left'], ['mix', 'Mix'], ['right', 'Right']];
   const PICTURE_SLIDERS = [
@@ -3220,9 +3221,9 @@ html[data-delve-picture] :is(.app--watch .stage--watch, .app--guide .stage--guid
       flushing = false;
       fetchNextChunk();
     };
-    resyncAudioStream = () => {
+    resyncAudioStream = delayMs => {
       clearTimeout(syncTimer);
-      if (ready) syncTimer = setTimeout(refetchWithNewSync, 300);   // while the slider is still moving, wait
+      if (ready) syncTimer = setTimeout(refetchWithNewSync, delayMs);
     };
 
     mediaSource.addEventListener('sourceopen', fetchNextChunk, { once: true });
@@ -3330,7 +3331,9 @@ html[data-delve-picture] :is(.app--watch .stage--watch, .app--guide .stage--guid
     const syncSlider = document.createElement('input');
     syncSlider.type = 'range'; syncSlider.className = 'player-volume-slider delve-slider'; syncSlider.dataset.sync = '';
     syncSlider.min = SYNC_RANGE.min; syncSlider.max = SYNC_RANGE.max; syncSlider.step = SYNC_RANGE.step;
-    syncSlider.addEventListener('input', () => { setSettings({ syncMs: Number(syncSlider.value) }); resyncAudioStream(); });
+    // Each refetch stalls the picture, so wait for the release (change) or a pause in the dragging.
+    syncSlider.addEventListener('input', () => { setSettings({ syncMs: Number(syncSlider.value) }); resyncAudioStream(SYNC_IDLE_MS); });
+    syncSlider.addEventListener('change', () => resyncAudioStream(0));
     syncLabel.append('Audio sync', syncValue);
     const nightHead = document.createElement('div');
     nightHead.className = 'cc-panel-head';
