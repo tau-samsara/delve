@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.14 - 2026-11-26
+- Mono Auto: a file whose left and right sides differ by 1 dB or more (was 1.5 dB) now gets Mix, so mildly uneven files like the one on channel 200 are caught more reliably.
+
 ## 0.39.13 - 2026-11-26
 - Audio sync: the slider no longer restarts the stream on every small step. The stream reloads once when you let go of the slider, or after a short pause.
 

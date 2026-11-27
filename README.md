@@ -136,7 +136,7 @@ Switch on **Audio tweaks** in the drawer. An **AUDIO** button appears just left 
 **Auto** (in the Mono row) listens for about ten seconds of sound and then picks for you:
 
 - a dead side (30 dB or more quieter): plays the other side in both ears;
-- sides that differ by 1.5 dB or more: Mix;
+- sides that differ by 1 dB or more: Mix;
 - evenly balanced sound: nothing changes and Auto switches itself off.
 
 It decides once. Select Auto again to repeat it, for example on another channel.

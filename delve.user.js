@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.13
+// @version      0.39.14
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2912,7 +2912,7 @@ html[data-delve-picture] :is(.app--watch .stage--watch, .app--guide .stage--guid
   // it turns Mono on with Left (right side dead), Right (left side dead) or Mix (sides uneven), then stops until the user
   // selects AUTO again. Evenly balanced sound changes nothing.
   const DETECT_MIN_SOUNDS = 100, DETECT_WINDOW_SOUNDS = 300;   // 10 s of sound before deciding, the last 30 s kept
-  const DETECT_DEAD_DB = 30, DETECT_UNEVEN_DB = 1.5;             // left-right energy difference that counts as dead / uneven
+  const DETECT_DEAD_DB = 30, DETECT_UNEVEN_DB = 1;               // left-right energy difference that counts as dead / uneven
   let monoDetection = null;   // { sounds: [[left power, right power], ...] } while listening, otherwise null
 
   function startMonoDetection() {
