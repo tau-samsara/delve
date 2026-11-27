@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.10 - 2026-11-26
+- Hide options: the Reactions and Both choices now also hide the hearts that float up over the video, not only the reaction bar under it.
+
 ## 0.39.9 - 2026-11-26
 - Theater mode on a phone: the row of buttons ran off the bottom of the screen, so SPELUNK and MORE could not be reached, and the page's own Guide / Watch / Channel bar showed through behind it. The row now fits on the screen and that bar is hidden in Theater.
 

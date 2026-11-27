@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.9
+// @version      0.39.10
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -3398,7 +3398,7 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
   // ---------------------------------------------------------------------------
   const HIDE_CSS = `
 html[data-delve-hide-comments] .comment-markers-sc, html[data-delve-hide-comments] .comment-seek-ticks, html[data-delve-hide-comments] .popup-comments { display: none; }
-html[data-delve-hide-reactions] .reaction-heat { display: none; }
+html[data-delve-hide-reactions] :is(.reaction-heat, .reaction-animator) { display: none; }
 .delve-hide-panel[hidden] { display: none; }
 .delve-hide-ctl .delve-hide-panel { width: 340px; max-width: calc(100vw - 40px); left: auto; right: 0; transform: none; }
 @media (max-width: 480px) { :root .delve-hide-ctl .delve-hide-panel { position: fixed; left: 50%; right: auto; top: 50%; bottom: auto; transform: translate(-50%, -50%); } }

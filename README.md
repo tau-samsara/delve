@@ -178,7 +178,7 @@ The drawer has an On/Off switch for each of these. They are all **off by default
 
 ![The PICTURE panel](images/picture-panel.png)
 
-- Hide options (the site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**. Comments hides the comment markers on the scrub bar and the comment pop-ups on the video; Reactions hides the reaction strip on the scrub bar; Both hides all of them. The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row)
+- Hide options (the site's HIDE button, in the player's key row, opens a small popup with **Off**, **Both**, **Comments** and **Reactions**. Comments hides the comment markers on the scrub bar and the comment pop-ups on the video; Reactions hides the reaction strip on the scrub bar and the hearts that float up over the video; Both hides all of them. The choice is remembered. Delve keeps the site's own HIDE state off, so the button no longer toggles anything by itself. On a phone, HIDE is in the site's **MORE** row)
 
 ![The HIDE popup](images/hide-popup.png)
 
