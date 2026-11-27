@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.7 - 2026-11-26
+- Watermark and Picture panels: on a narrower window the panel could be cut off at the left edge of the video. It now slides in to stay fully visible, and the Picture panel scrolls if there is not enough room above its button.
+
 ## 0.39.6 - 2026-11-26
 - Audio tweaks: when a channel's video fails to download after another channel has already been played through Delve, Delve now tries again up to three times (about three seconds apart) instead of going straight to a silent video. The picture stays blank while it retries.
 

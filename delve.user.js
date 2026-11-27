@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.6
+// @version      0.39.7
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -2696,9 +2696,28 @@ html[data-delve-picture] .app--watch .stage--watch .stage-video-wrap { overflow:
     });
     syncPicturePanel();
   }
+  // Right-aligned panels slide right just enough to stay inside the stage, which clips them.
+  function keepPanelInWindow(panel) {
+    panel.style.translate = '';
+    panel.style.maxHeight = '';
+    panel.style.overflowY = '';
+    if (getComputedStyle(panel).position === 'fixed') return;
+    const stage = panel.closest('.stage--watch');
+    const leftLimit = Math.max(0, stage ? stage.getBoundingClientRect().left : 0) + 8;
+    const rect = panel.getBoundingClientRect();
+    const overflowLeft = leftLimit - rect.left;
+    if (overflowLeft > 0) panel.style.translate = overflowLeft + 'px 0';
+    const topLimit = (stage ? stage.getBoundingClientRect().top : 0) + 8;
+    if (rect.top < topLimit) {
+      panel.style.maxHeight = rect.height - (topLimit - rect.top) + 'px';
+      panel.style.overflowY = 'auto';
+      panel.scrollTop = 0;
+    }
+  }
   function setPicturePanelOpen(open) {
     if (!picturePanel) return;
     picturePanel.hidden = !open;
+    if (open) keepPanelInWindow(picturePanel);
     picturePanel.parentElement.classList.toggle('subtitle-ctl--open', open);
     picturePanel.parentElement.querySelector('#delve-picture').setAttribute('aria-expanded', open);
   }
@@ -3754,6 +3773,7 @@ html[data-delve-hide-reactions] .reaction-heat { display: none; }
   function setWatermarkPanelOpen(open) {
     if (!watermarkPanel) return;
     watermarkPanel.hidden = !open;
+    if (open) keepPanelInWindow(watermarkPanel);
     watermarkPanel.parentElement.classList.toggle('subtitle-ctl--open', open);
     watermarkPanel.parentElement.querySelector('#delve-watermark').setAttribute('aria-expanded', open);
   }
