@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.40.1 - 2026-11-28
+- Fixed: in the Wide and Split layouts the guide's WATCH / VIEW CHANNEL bar now sits at the bottom of the info panel, with no empty band under it, and the panel's left, right and bottom borders keep their gradient behind it.
+
 ## 0.40.0 - 2026-11-28
 - New: Tape stack (Guide group in the menu, off by default). Save programs from the program card with the Save tape button in the guide's WATCH / VIEW CHANNEL row.
 - New: a TAPES tab beside INFO in the guide lists your tapes. Each tape has a note, a Normal, Broken or Quiet flag, Play from here and Remove.

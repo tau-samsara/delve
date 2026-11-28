@@ -44,7 +44,9 @@ ${L} .stage--guide .guide-info-description { margin-bottom: 6px; }
 /* Keep WATCH / VIEW CHANNEL reachable in short windows. */
 /* (F27) A footer bar: it takes the card's own background, so the text that scrolls under it does not show through the gaps
    between the buttons (it used to be drawn over "Up next" like a glitch). */
-${L} .stage--guide .guide-actions { position: sticky; bottom: -9px; z-index: 2; margin: 0 -16px -9px; padding: 6px 16px 15px; background: inherit; }   /* the card has 9px of bottom padding: the bar covers it too */
+${L} .stage--guide .guide-actions { position: sticky; bottom: -9px; z-index: 2; margin: auto -18px -9px; padding: 6px 18px 15px; background: inherit; overflow: hidden; flex: none; }   /* flush with the card's padding (18px side, 9px bottom in Wide and Split); margin-top: auto keeps the bar at the bottom */
+/* The bar covers the card's stepped ring at its sides and bottom: draw the ring again over it. The top band lies above the bar and is cut off by its overflow. */
+${L} .stage--guide .guide-actions::before { content: ''; position: absolute; inset: -8px 0 0; box-shadow: var(--8s-ring, none); pointer-events: none; }
 ${L} .tv-grid { min-height: 0; }
 ${L} .app--guide .grid-row.active .grid-channel-num::after { content: ' \\25B6'; color: var(--gold); font-size: .8em; }
 ${L} .app--guide .prevue-header-clock { white-space: nowrap; }
