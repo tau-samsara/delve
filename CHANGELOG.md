@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.16 - 2026-11-27
+- Fixed: in watch mode the Internet Archive and IMDb links are no longer shown twice when the site already shows them.
+
 ## 0.39.15 - 2026-11-27
 - Fixed: the header clock no longer stops when 24-hour time is on.
 

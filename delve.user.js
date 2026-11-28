@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.15
+// @version      0.39.16
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1180,12 +1180,14 @@ html.theme-8s .delve-changelog { background: var(--8s-box); border: 0; box-shado
   }
 
   // IMDb / Internet Archive links, or null when the program has neither.
-  function makeLinks(detail, item, cls) {
+  // `block`: a site block that may already show a link (the watch page has its own "via archive.org" tag); that link is skipped.
+  function makeLinks(detail, item, cls, block) {
     const links = el('div', (cls || 'guide-info-now-desc') + ' delve-prog-links');
-    if (detail && detail.imdbId && /^tt\d+$/.test(detail.imdbId)) {
+    const siteHas = sel => !!block && !!block.querySelector(sel + ':not(.delve-link a)');
+    if (detail && detail.imdbId && /^tt\d+$/.test(detail.imdbId) && !siteHas('a[href*="imdb.com/title"]')) {
       links.append(linkItem('IMDb', 'https://www.imdb.com/title/' + detail.imdbId + '/'));
     }
-    if (item && item.id) {
+    if (item && item.id && !siteHas('a[href*="archive.org/details"]')) {
       links.append(linkItem('Internet Archive', 'https://archive.org/details/' + encodeURIComponent(item.id)));
     }
     return links.childNodes.length ? links : null;
@@ -1203,7 +1205,7 @@ html.theme-8s .delve-changelog { background: var(--8s-box); border: 0; box-shado
     if (old && old.dataset.key === key) return;
     if (old) old.remove();
     const hit = nowCache.get(key);
-    const links = hit && makeLinks(hit.detail, hit.item, cls);
+    const links = hit && makeLinks(hit.detail, hit.item, cls, block);
     if (!links) return;
     links.classList.add('delve-now-links');
     links.dataset.key = key;
