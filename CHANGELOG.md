@@ -2,6 +2,11 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.40.0 - 2026-11-28
+- New: Tape stack (Guide group in the menu, off by default). Save programs from the program card with the Save tape button in the guide's WATCH / VIEW CHANNEL row.
+- New: a TAPES tab beside INFO in the guide lists your tapes. Each tape has a note, a Normal, Broken or Quiet flag, Play from here and Remove.
+- New: your saved tapes play on a TAPES channel added to the guide after a reload. It loops your tapes, leaves out Broken ones, and Play from here starts it at that tape.
+
 ## 0.39.19 - 2026-11-28
 - A channel that moves up in the sort now flashes briefly in yellow.
 

@@ -180,6 +180,7 @@
       ensureClock24();
       ensureTagTips();
       ensureWatchers();
+      ensureTapes();
       ensureGuide();
       ensureHiddenChannelGuard();
     });

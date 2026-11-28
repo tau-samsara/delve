@@ -102,7 +102,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
     if (!s) {
       s = document.createElement('style');
       s.id = STYLE_ID;
-      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + CHANGELOG_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + WATCHERS_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + AUTO_SPELUNK_CSS + WATERMARK_CSS + VOLUME_POPUP_CSS;
+      s.textContent = LAYOUT_CSS + DRAWER_CSS + PANEL_CSS + BAR_CSS + SEARCH_CSS + CHANGELOG_CSS + NOW_CSS + WIDE_CSS + THEATER_CSS + WATCHERS_CSS + PICTURE_CSS + AUDIO_CSS + HIDE_CSS + AUTO_SPELUNK_CSS + WATERMARK_CSS + VOLUME_POPUP_CSS + TAPES_CSS;
       (document.head || root).appendChild(s);
     }
   }
@@ -199,6 +199,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
         ensureClock24();
         ensureTagTips();
         ensureWatchers();
+        ensureTapes();
       });
       row.append(label, b);
       row.dataset.group = group;
@@ -259,6 +260,7 @@ html .delve-prog-links { -webkit-line-clamp: unset; overflow: visible; }
       ensureAudio();
       ensureClock24();
       ensureWatchers();
+      ensureTapes();
     });
     const newsBtn = document.createElement('button');
     newsBtn.type = 'button';

@@ -61,9 +61,10 @@
     autoSpelunkOn: false, // AUTO button beside SPELUNK: tunes a random channel on a timer
     autoSpelunkSeconds: 0,   // AUTO_SPELUNK_INTERVALS; 0 is off
     spelunkFavoritesOnly: false,   // in the AUTO popup: SPELUNK and the timer pick only starred channels
+    tapesOn: false,       // tape stack: Save tape on program cards, a TAPES tab, and a TAPES channel
   };
   const DRAWER_GROUPS = [['layout', 'Layout'], ['guide', 'Guide'], ['player', 'Player']];
-  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['hideChannelsOn', 'Hide channels', 'guide'],['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player'], ['autoSpelunkOn', 'Auto spelunk', 'player']];
+  const FEATURES = [['programInfo', 'Program information', 'guide'], ['favoritesOn', 'Favorites', 'guide'], ['hideChannelsOn', 'Hide channels', 'guide'],['sortOn', 'Sort', 'guide'], ['searchOn', 'Search', 'guide'], ['extended', 'Extended guide', 'guide'], ['clock24', '24-hour clock', 'guide'], ['tagTips', 'Tag tooltips', 'guide'], ['watchers', 'Watcher count', 'guide'], ['tapesOn', 'Tape stack', 'guide'], ['theater', 'Theater mode', 'player'], ['pictureOn', 'Picture tweaks', 'player'], ['audioOn', 'Audio tweaks', 'player'], ['hideOn', 'Hide options', 'player'], ['watermarkOn', 'Watermark', 'player'], ['volumePopup', 'Volume slider', 'player'], ['autoSpelunkOn', 'Auto spelunk', 'player']];
   const AUTO_SPELUNK_INTERVALS = [[0, 'Off'], [15, '15 s'], [30, '30 s'], [60, '1 min'], [300, '5 min']];
   const WATERMARK_SLIDERS = [['watermarkSize', 'Size', { min: 4, max: 20, step: 1 }], ['watermarkOpacity', 'Opacity', { min: 1, max: 20, step: 1 }]];
   const WATERMARK_CORNERS = [['top-left', '↖', 'Top left'], ['top-right', '↗', 'Top right'], ['bottom-left', '↙', 'Bottom left'], ['bottom-right', '↘', 'Bottom right']];

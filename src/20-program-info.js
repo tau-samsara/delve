@@ -360,6 +360,10 @@
 
     const links = makeLinks(detail, item);
     if (links) now.append(links);
+    tapeCardItem = item;
+    const tapeButton = p.parentNode.matches('.app') ? makeTapeButton(item) : null;   // the guide's own action row gets it in ensureTapes
+    if (tapeButton) top.append(tapeButton);
+    showInfoTab();
     if (p.parentNode.matches('.app')) {   // above the guide in Split's watch mode: a close button instead of the link
       const close = el('button', 'bbtn bbtn-outline delve-prog-close', 'X');
       close.type = 'button';
@@ -388,6 +392,7 @@
     openToken++;
     progState = null;
     lastInfo = null;
+    tapeCardItem = null;
     root.removeAttribute('data-delve-loading');
     root.removeAttribute('data-delve-prog');
     root.removeAttribute('data-delve-hdr');
@@ -427,6 +432,7 @@
     const row = cell.closest('.grid-row');
     const channelId = row && row.dataset.channel;
     if (!channelId) return;
+    showInfoTab();   // reserveStageHeight measures the site's blocks, which the TAPES tab hides
     reserveStageHeight();
     let c, start = null, end = null;
     const wd = wideCellData.get(cell);
