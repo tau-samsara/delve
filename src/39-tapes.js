@@ -49,6 +49,7 @@ html[data-delve-tapes-mode] :is(.app--guide, .app--watch:not(.app--channel)) .tv
 .delve-tape-play:disabled { opacity: .4; cursor: default; }
 .delve-tape-flag { width: 100%; min-height: 30px; height: 30px; }
 .delve-tape-note { box-sizing: border-box; width: 100%; height: 30px; padding: 0 8px; background: var(--bg-deep, #060b1e); color: inherit; border: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; }
+html[data-delve-tapes-channel] :is(.comment-btn-wrap, .comment-input-popover, .react-wrap, .reaction-bar-inline) { display: none !important; }
 .guide-actions .delve-tape-save { margin-left: auto; }
 .delve-prog-labelrow .delve-tape-save { margin-left: auto; min-height: 24px; padding: 0 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
 `;
@@ -349,6 +350,8 @@ html[data-delve-tapes-mode] :is(.app--guide, .app--watch:not(.app--channel)) .tv
     root.removeAttribute('data-delve-tapes-mode');
   }
   function ensureTapes() {
+    const onTapesChannel = settings.tapesOn && decodeURIComponent(location.pathname.split('/')[1] || '') === TAPES_CHANNEL_ID;
+    if (root.hasAttribute('data-delve-tapes-channel') !== onTapesChannel) root.toggleAttribute('data-delve-tapes-channel', onTapesChannel);
     const grid = settings.tapesOn ? guidePanel() : null;
     const col = settings.tapesOn ? infoColumn() : null;
     if (col) ensureSaveButton(col); else removeSaveButton();

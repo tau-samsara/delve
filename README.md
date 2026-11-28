@@ -177,7 +177,7 @@ The guide panel gets two tabs, **GUIDE** and **TAPES (n)**. TAPES hides the guid
 - **On / Off**: whether the channel plays the tape. A Broken tape is always Off and can't be switched on until you change its flag
 - **✕** takes the tape out of the stack and keeps it saved
 
-The tapes in the stack also play as a channel. When the stack has tapes that are On, a **TAPES** channel is added at the bottom of the guide (the site shows its number as `--`) and plays them in stack order, one after another, looping, starting when the page loads, or at the tape you chose with **Play**. You tune it, watch it and rewind it like any other channel. The channel is built when the page loads, so changes to the stack show up in it after a reload.
+The tapes in the stack also play as a channel. When the stack has tapes that are On, a **TAPES** channel is added at the bottom of the guide (the site shows its number as `--`) and plays them in stack order, one after another, looping, starting when the page loads, or at the tape you chose with **Play**. You tune it, watch it and rewind it like any other channel, except that commenting and reacting are switched off on it. The channel is built when the page loads, so changes to the stack show up in it after a reload.
 
 Tapes are stored by Delve in your browser, apart from the settings, so **Reset all settings** keeps them and switching the feature off keeps them too. Nothing is sent anywhere; the TAPES channel exists only in your browser, and the site's player plays the same archive.org video files it plays for any channel.
 

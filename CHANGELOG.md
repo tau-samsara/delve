@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.42.1 - 2026-11-28
+- Commenting and reacting are switched off on the TAPES channel.
+
 ## 0.42.0 - 2026-11-28
 - The TAPES tab now has two views, Saved and Stack.
 - Saved lists every tape you saved, where you edit the flag and note, remove a tape, or add it to the stack.
