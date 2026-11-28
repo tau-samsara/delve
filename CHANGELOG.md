@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.17 - 2026-11-27
+- Fixed: clicking the X to hide a channel in the wider guide no longer tunes that channel.
+
 ## 0.39.16 - 2026-11-27
 - Fixed: in watch mode the Internet Archive and IMDb links are no longer shown twice when the site already shows them.
 

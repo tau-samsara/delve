@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.16
+// @version      0.39.17
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1421,8 +1421,8 @@ html.theme-8s .delve-changelog { background: var(--8s-box); border: 0; box-shado
   document.addEventListener('click', e => {
     if (dragClickPending) { dragClickPending = false; e.stopPropagation(); e.preventDefault(); return; }   // the end of a drag, not a click
     const t = e.target;
-    if (!t || !t.closest || t.closest('.delve-star')) return;
-    if (t.closest('.grid-row[data-delve-dim]') && !t.closest('.delve-hidebtn')) { e.stopPropagation(); e.preventDefault(); return; }   // a hidden channel can't be tuned
+    if (!t || !t.closest || t.closest('.delve-star, .delve-hidebtn')) return;
+    if (t.closest('.grid-row[data-delve-dim]')) { e.stopPropagation(); e.preventDefault(); return; }   // a hidden channel can't be tuned
     const siteRowInfo = id => document.querySelector(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid > .tv-grid-body > .grid-row[data-channel="' + CSS.escape(id) + '"] .grid-channel-info');
     // Wider view: a click on a channel selects it on the site, as a click on the site's own row does.
     const wInfo = t.closest('.delve-wide-row > .grid-channel-info');
