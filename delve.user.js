@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.17
+// @version      0.39.18
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -1657,19 +1657,24 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   const rowName = row => (((row.querySelector('.grid-channel-name-text') || {}).textContent) || row.dataset.channel || '').trim().toLowerCase();
   function applyOrder(rows) {
     const sortKey = effectiveSort();
-    const sig = [sortKey, settings.favorites.join(','), rows.map(r => r.dataset.channel).join(',')].join('|');
-    if (sig === orderSig) return;
-    orderSig = sig;
     let style = document.getElementById('delve-order');
-    if (sortKey === 'dial') { if (style) style.textContent = ''; return; }
-    if (!style) {
-      style = document.createElement('style');
-      style.id = 'delve-order';
-      (document.head || root).appendChild(style);
+    if (sortKey === 'dial') {
+      if (orderSig !== 'dial' && style) style.textContent = '';
+      orderSig = 'dial';
+      return;
     }
     const seen = new Set();   // the wider view repeats every channel: one order per channel
     const items = rows.filter(r => !seen.has(r.dataset.channel) && seen.add(r.dataset.channel))
       .map((row, i) => ({ id: row.dataset.channel, i, name: rowName(row), viewers: rowViewers(row), fav: isFav(row.dataset.channel) ? 0 : 1 }));
+    // Names and viewer counts fill in after the rows appear, and change while watching: they belong in the signature.
+    const sig = sortKey + '|' + items.map(it => [it.id, it.name, it.viewers, it.fav].join(':')).join(',');
+    if (sig === orderSig && style && style.isConnected) return;
+    orderSig = sig;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'delve-order';
+    }
+    if (!style.isConnected) (document.head || root).appendChild(style);
     const cmp = {
       name: (a, b) => a.name.localeCompare(b.name) || a.i - b.i,
       viewers: (a, b) => b.viewers - a.viewers || a.i - b.i,
@@ -4158,7 +4163,8 @@ html[data-delve-hide-reactions] :is(.reaction-heat, .reaction-animator) { displa
   applyHide();
   if (document.head) applyStyle();
   else new MutationObserver((_, obs) => { if (document.head) { obs.disconnect(); applyStyle(); } }).observe(root, { childList: true });
-  observer.observe(root, { childList: true, subtree: true });
+  // The site updates viewer counts in place (text node and title), which childList alone misses.
+  observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['title'] });
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     applyLayout(); ensureButtons(); placeWatermark();

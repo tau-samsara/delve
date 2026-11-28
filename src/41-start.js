@@ -190,7 +190,8 @@
   applyHide();
   if (document.head) applyStyle();
   else new MutationObserver((_, obs) => { if (document.head) { obs.disconnect(); applyStyle(); } }).observe(root, { childList: true });
-  observer.observe(root, { childList: true, subtree: true });
+  // The site updates viewer counts in place (text node and title), which childList alone misses.
+  observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['title'] });
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     applyLayout(); ensureButtons(); placeWatermark();

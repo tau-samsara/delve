@@ -2,6 +2,10 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.18 - 2026-11-28
+- Fixed: the chosen sort is now applied after refreshing the page.
+- Fixed: Most watched now re-sorts the guide when channel watcher counts change.
+
 ## 0.39.17 - 2026-11-27
 - Fixed: clicking the X to hide a channel in the wider guide no longer tunes that channel.
 
