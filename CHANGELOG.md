@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.41.1 - 2026-11-28
+- The TAPES channel now has the channel number -1. The site shows it as -- and lists it last in the guide.
+
 ## 0.41.0 - 2026-11-28
 - Tape stack is now a mode of the guide. The guide panel has two tabs, GUIDE and TAPES. TAPES hides the guide and shows your tapes as a table with Play, title, length, a Normal / Broken / Quiet flag, a note and a remove button.
 - Play tunes the TAPES channel in the guide's preview, starting at that tape, and keeps you on the TAPES tab.

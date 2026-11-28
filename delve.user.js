@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.41.0
+// @version      0.41.1
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -3976,11 +3976,8 @@ html[data-delve-tapes-mode] :is(.app--guide, .app--watch:not(.app--channel)) .tv
           details: { channel: channelId, version: 1, items: items.map(() => ({})), build: templateManifest.build },
         };
       }
-      const usedDials = lineup.channels.map(c => c && c.dial);
-      let dial = 99;
-      while (usedDials.includes(dial)) dial++;
       lineup.channels.push({
-        id: channelId, name: 'TAPES', emoji: '📼', color: '#ffd740', description: 'Your saved tapes, one after another.', family: null, logomark: null, dial,
+        id: channelId, name: 'TAPES', emoji: '📼', color: '#ffd740', description: 'Your saved tapes, one after another.', family: null, logomark: null, dial: -1,
         stats: { items: items.length, videoSeconds: items.reduce((sum, item) => sum + item.duration, 0) },
         versions: [{ v: 1, manifest: 'manifests/' + channelId + '/v1.json', details: 'details/' + channelId + '/v1.json', epochMs: built.epochMs, effectiveAtMs: built.epochMs, startIndex }],
       });

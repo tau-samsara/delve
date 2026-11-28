@@ -168,7 +168,7 @@ The guide panel gets two tabs, **GUIDE** and **TAPES (n)**. TAPES hides the guid
 - a **note** (saved as you type)
 - **✕** to remove the tape
 
-The tapes also play as a channel. When you have saved tapes, a **TAPES** channel is added to the guide (the first free dial number from 99) and plays them one after another, looping, starting when the page loads, or at the tape you chose with **Play from here**. You tune it, watch it and rewind it like any other channel. Tapes marked **Broken** are left out of it. The channel is built when the page loads, so changes to your tapes show up in it after a reload.
+The tapes also play as a channel. When you have saved tapes, a **TAPES** channel is added at the bottom of the guide (the site shows its number as `--`) and plays them one after another, looping, starting when the page loads, or at the tape you chose with **Play from here**. You tune it, watch it and rewind it like any other channel. Tapes marked **Broken** are left out of it. The channel is built when the page loads, so changes to your tapes show up in it after a reload.
 
 Tapes are stored by Delve in your browser, apart from the settings, so **Reset all settings** keeps them and switching the feature off keeps them too. Nothing is sent anywhere; the TAPES channel exists only in your browser, and the site's player plays the same archive.org video files it plays for any channel.
 
