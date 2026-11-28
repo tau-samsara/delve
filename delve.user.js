@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.40.1
+// @version      0.40.2
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -3917,6 +3917,9 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
 .delve-prog-labelrow .delve-tape-save { margin-left: auto; min-height: 24px; padding: 0 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
 `;
 
+  // Many programs share one Archive item and differ by file (episodes of a series): the file is part of what a tape is.
+  const tapeKey = item => item.id + '|' + (item.file || item.mp4 || '');   // an Archive id never holds a "|"
+
   function validTape(tape) {
     const item = tape && tape.item;
     return !!item && typeof item === 'object' && typeof item.id === 'string' && item.id !== '' && typeof item.title === 'string' &&
@@ -3928,7 +3931,7 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
       const list = typeof raw === 'string' ? JSON.parse(raw) : raw;
       if (!Array.isArray(list)) return [];
       const seen = new Set();
-      return list.filter(validTape).filter(t => !seen.has(t.item.id) && seen.add(t.item.id)).map(t => ({
+      return list.filter(validTape).filter(t => !seen.has(tapeKey(t.item)) && seen.add(tapeKey(t.item))).map(t => ({
         item: t.item,
         note: typeof t.note === 'string' ? t.note : '',
         flag: TAPE_FLAGS.some(([key]) => key === t.flag) ? t.flag : '',
@@ -3940,9 +3943,9 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
     try { GM_setValue(TAPES_KEY, tapes); }
     catch (e) { console.warn('[delve] could not save tapes', e); }
   }
-  const isSaved = id => tapes.some(t => t.item.id === id);
+  const isSaved = item => tapes.some(t => tapeKey(t.item) === tapeKey(item));
   function toggleTape(item) {
-    if (isSaved(item.id)) tapes = tapes.filter(t => t.item.id !== item.id);
+    if (isSaved(item)) tapes = tapes.filter(t => tapeKey(t.item) !== tapeKey(item));
     else tapes.push({ item: JSON.parse(JSON.stringify(item)), note: '', flag: '' });
     saveTapes();
     renderTapes();
@@ -3992,7 +3995,7 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
     if (!playable.length) return;
     let startId = '';
     try { startId = sessionStorage.getItem(TAPES_START_KEY) || ''; sessionStorage.removeItem(TAPES_START_KEY); } catch (e) { /* start at the first tape */ }
-    const startIndex = Math.max(0, playable.findIndex(item => item.id === startId));
+    const startIndex = Math.max(0, playable.findIndex(item => tapeKey(item) === startId));
     try {
       const s = document.createElement('script');
       s.textContent = '(' + tapesPageHelper.toString() + ')(' + JSON.stringify(TAPES_CHANNEL_ID) + ',' + JSON.stringify(playable) + ',' + startIndex + ');';
@@ -4008,7 +4011,7 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
     const btn = el('button', 'bbtn bbtn-outline delve-tape-save' + (inActionRow ? ' guide-channel-btn' : ''));   // the row's styling hangs on the site's class
     btn.type = 'button';
     const paint = () => {
-      const saved = isSaved(item.id);
+      const saved = isSaved(item);
       btn.textContent = saved ? '★ Saved' : '☆ Save tape';
       btn.setAttribute('aria-pressed', String(saved));
     };
@@ -4017,19 +4020,28 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
     paint();
     return btn;
   }
-  // In the guide the button lives in the site's action row (WATCH, VIEW CHANNEL), for the card now shown.
+  // In the guide the button lives in the site's action row (WATCH, VIEW CHANNEL): for the card now shown, otherwise for the
+  // program the site's "Now playing" block shows (found by the same lookup that adds its IMDb / Archive links).
   let tapeCardItem = null, tapeSaveButton = null;
   function removeSaveButton() {
     if (tapeSaveButton) tapeSaveButton.remove();
     tapeSaveButton = null;
   }
+  function nowPlayingItem() {
+    const { block, title } = NOW_BLOCKS[0];
+    const titleElement = document.querySelector(block + ' ' + title);
+    const channelId = highlightedChannel();
+    const found = titleElement && channelId && nowCache.get(channelId + '|' + titleElement.textContent.trim());
+    return (found && found.item) || null;
+  }
   function ensureSaveButton(col) {
     const actions = col.querySelector(':scope > .guide-actions');
-    if (!actions || !tapeCardItem) { removeSaveButton(); return; }
-    if (!tapeSaveButton || tapeSaveButton.dataset.itemId !== tapeCardItem.id) {
+    const item = tapeCardItem || nowPlayingItem();
+    if (!actions || !item) { removeSaveButton(); return; }
+    if (!tapeSaveButton || tapeSaveButton.dataset.itemId !== tapeKey(item)) {
       removeSaveButton();
-      tapeSaveButton = makeTapeButton(tapeCardItem, true);
-      if (tapeSaveButton) tapeSaveButton.dataset.itemId = tapeCardItem.id;
+      tapeSaveButton = makeTapeButton(item, true);
+      if (tapeSaveButton) tapeSaveButton.dataset.itemId = tapeKey(item);
     }
     if (tapeSaveButton && tapeSaveButton.parentNode !== actions) actions.append(tapeSaveButton);
   }
@@ -4052,7 +4064,7 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
     tapesTabs.querySelector('[data-view="tapes"]').textContent = 'Tapes (' + tapes.length + ')';
   }
   function tapeRow(tape) {
-    const open = openTapeId === tape.item.id;
+    const open = openTapeId === tapeKey(tape.item);
     const row = el('div', 'delve-tape');
     const head = el('button', 'delve-tape-head');
     head.type = 'button';
@@ -4061,7 +4073,7 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
     if (tape.item.year) head.append(el('span', 'btag btag-ghost', tape.item.year));
     if (tape.flag) head.append(el('span', 'btag btag-ghost', tape.flag.toUpperCase()));
     head.append(el('span', 'guide-info-now-desc', fmtDur(tape.item.duration)));
-    head.addEventListener('click', () => { openTapeId = open ? '' : tape.item.id; renderTapes(); });
+    head.addEventListener('click', () => { openTapeId = open ? '' : tapeKey(tape.item); renderTapes(); });
     row.append(head);
     if (!open) return row;
 
@@ -4087,7 +4099,7 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
       const play = el('button', 'bbtn bbtn-gold delve-tape-action', 'Play from here');
       play.type = 'button';
       play.addEventListener('click', () => {
-        try { sessionStorage.setItem(TAPES_START_KEY, tape.item.id); } catch (e) { /* the channel starts at the first tape */ }
+        try { sessionStorage.setItem(TAPES_START_KEY, tapeKey(tape.item)); } catch (e) { /* the channel starts at the first tape */ }
         location.assign('/' + TAPES_CHANNEL_ID);
       });
       body.append(play);

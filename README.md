@@ -158,7 +158,7 @@ The total number of people watching, copied from the site's own figure: a badge 
 
 ### Tape stack
 
-A personal playlist of programs. With this on, a **☆ Save tape** button appears at the right end of the guide's WATCH / VIEW CHANNEL row while a program's card is open; saved programs show **★ Saved**, and pressing it again removes the tape. (In Split's watch view, where the guide sits below the player, the button is at the top of the card instead.) Marathon blocks have no single video and can't be saved.
+A personal playlist of programs. With this on, a **☆ Save tape** button appears at the right end of the guide's WATCH / VIEW CHANNEL row, for the program whose card is open or, when no card is open, for the one the site's Now playing block shows (this needs Program information on, which finds the program); saved programs show **★ Saved**, and pressing it again removes the tape. (In Split's watch view, where the guide sits below the player, the button is at the top of the card instead.) Marathon blocks have no single video and can't be saved.
 
 The guide's info column gets two tabs, **INFO** and **TAPES (n)**. TAPES lists your tapes with their year and length. Click a tape to open it:
 

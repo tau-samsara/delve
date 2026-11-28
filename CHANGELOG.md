@@ -2,6 +2,10 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.40.2 - 2026-11-28
+- Tape stack: the Save tape button now also shows for the program in the guide's Now playing block when no program card is open (needs Program information on).
+- Fixed: saving one episode of a series no longer marks every episode of it as saved, and each episode can be saved as its own tape.
+
 ## 0.40.1 - 2026-11-28
 - Fixed: in the Wide and Split layouts the guide's WATCH / VIEW CHANNEL bar now sits at the bottom of the info panel, with no empty band under it, and the panel's left, right and bottom borders keep their gradient behind it.
 
