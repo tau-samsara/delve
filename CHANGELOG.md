@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.19 - 2026-11-28
+- A channel that moves up in the sort now flashes briefly in yellow.
+
 ## 0.39.18 - 2026-11-28
 - Fixed: the chosen sort is now applied after refreshing the page.
 - Fixed: Most watched now re-sorts the guide when channel watcher counts change.

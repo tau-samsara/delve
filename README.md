@@ -113,6 +113,8 @@ The **Sort** drop-down in the guide toolbar orders the channels by:
 - Most watched (by viewer count)
 - Favorites first
 
+When the order changes while you watch (for example a channel's viewer count rises), a channel that moves up flashes briefly in yellow.
+
 ![The Sort drop-down open](images/guide-sort.png)
 
 ![Sorted by Most watched](images/guide-sort-most-watched.png)

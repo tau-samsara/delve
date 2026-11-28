@@ -24,6 +24,8 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-time-header { order: -1; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-hide] { display: none !important; }
 :is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-dim] { opacity: .45; }
+@keyframes delve-rise { from { background-color: color-mix(in srgb, var(--8s-yellow, #ffd740) 30%, transparent); } to { background-color: transparent; } }
+:is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-delve-rise] { animation: delve-rise 2s ease-out; }
 .delve-chan-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
 .delve-chan-actions button { flex: 1 1 0; }
 .delve-chan-actions [hidden] { display: none; }
@@ -186,6 +188,15 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
   }
 
   let orderSig = '';
+  let lastRanks = null;
+  function flashRise(id, rows) {
+    rows.filter(r => r.dataset.channel === id).forEach(row => {
+      row.removeAttribute('data-delve-rise');
+      void row.offsetWidth;   // restart the animation
+      row.setAttribute('data-delve-rise', '');
+      setTimeout(() => row.removeAttribute('data-delve-rise'), 2200);
+    });
+  }
   const rowViewers = row => {
     const v = row.querySelector('.grid-channel-viewers');
     if (!v) return 0;
@@ -198,6 +209,7 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
     if (sortKey === 'dial') {
       if (orderSig !== 'dial' && style) style.textContent = '';
       orderSig = 'dial';
+      lastRanks = null;
       return;
     }
     const seen = new Set();   // the wider view repeats every channel: one order per channel
@@ -218,6 +230,9 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
       favorites: (a, b) => a.fav - b.fav || a.i - b.i,
     }[sortKey];
     items.sort(cmp);
+    const ranks = new Map(items.map((it, n) => [it.id, n]));
+    if (lastRanks && lastRanks.sortKey === sortKey) items.forEach(it => { if (lastRanks.map.has(it.id) && ranks.get(it.id) < lastRanks.map.get(it.id)) flashRise(it.id, rows); });
+    lastRanks = { sortKey, map: ranks };
     style.textContent = items.map((it, n) => ':is(.app--guide, .app--watch:not(.app--channel)) .grid-row[data-channel="' + CSS.escape(it.id) + '"]{order:' + (n + 1) + '}').join('\n');
   }
 
