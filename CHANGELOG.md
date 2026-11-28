@@ -2,6 +2,11 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.41.0 - 2026-11-28
+- Tape stack is now a mode of the guide. The guide panel has two tabs, GUIDE and TAPES. TAPES hides the guide and shows your tapes as a table with Play, title, length, a Normal / Broken / Quiet flag, a note and a remove button.
+- Play tunes the TAPES channel in the guide's preview, starting at that tape, and keeps you on the TAPES tab.
+- The INFO | TAPES tabs in the guide's info card are gone. Save tape stays in the card's WATCH / VIEW CHANNEL row.
+
 ## 0.40.2 - 2026-11-28
 - Tape stack: the Save tape button now also shows for the program in the guide's Now playing block when no program card is open (needs Program information on).
 - Fixed: saving one episode of a series no longer marks every episode of it as saved, and each episode can be saved as its own tape.

@@ -112,7 +112,9 @@ html[data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .
       return;
     }
     if (!bar) bar = buildBar();
-    if (grid.firstElementChild !== bar) grid.insertBefore(bar, grid.firstChild);
+    const first = grid.firstElementChild;
+    const slot = first && first.classList.contains('delve-modebar') ? first.nextElementSibling : first;   // the tape stack's tabs, when on, come first
+    if (slot !== bar) grid.insertBefore(bar, slot);
     root.setAttribute('data-delve-bar', '1');
     favBtn.hidden = !settings.favoritesOn;
     hiddenBtn.hidden = !settings.hideChannelsOn;

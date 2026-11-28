@@ -1,29 +1,35 @@
   // ---------------------------------------------------------------------------
   // Tape stack. A tape is a program saved from its info card: the playlist item the site plays from, plus your note and a
-  // flag. The stack shows as a TAPES tab in the guide's info column and plays as a TAPES channel: the page's fetch is wrapped
+  // flag. The stack is a mode of the guide panel (a TAPES tab beside GUIDE) and plays as a TAPES channel: the page's fetch is wrapped
   // so the site's lineup holds one more channel, which the site loads, tunes and plays like any other. Stored apart from the
   // settings, so "Reset all settings" keeps the tapes.
   // ---------------------------------------------------------------------------
   const TAPES_KEY = 'tapes';
   const TAPES_CHANNEL_ID = 'delve-tapes';
-const TAPES_START_KEY = 'delve-tapes-start';   // sessionStorage: the tape the next page load starts the channel on
+  const TAPES_START_KEY = 'delve-tapes-start';   // sessionStorage: the tape the next page load starts the channel on
+  const TAPES_MODE_KEY = 'delve-tapes-mode';     // sessionStorage: '1' while the TAPES tab is the one showing
   const TAPE_FLAGS = [['', 'Normal'], ['broken', 'Broken'], ['quiet', 'Quiet']];
 
   const TAPES_CSS = `
-html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(.delve-tapes) { display: none !important; }
-.delve-tabs { display: flex; gap: var(--space-2, 8px); margin-bottom: var(--space-2, 8px); }
-.delve-tabs .view-switch-key { flex: 0 0 auto; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
-.delve-tapes { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-.delve-tapes-empty { margin: 0; }
-.delve-tape { padding: 6px 0; border-top: 1px solid var(--border-color, rgb(38, 82, 178)); }
-.delve-tape-head { display: flex; align-items: baseline; gap: var(--space-2, 8px); width: 100%; padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.delve-tape-head:focus-visible { outline: 2px solid var(--cyan, #00ccdd); outline-offset: 2px; }
-.delve-tape-title { flex: 1 1 auto; min-width: 0; }
-.delve-tape-body { display: flex; flex-direction: column; gap: var(--space-2, 8px); margin-top: var(--space-2, 8px); }
-.delve-tape-note { box-sizing: border-box; width: 100%; min-height: 60px; resize: vertical; padding: 6px 8px; background: var(--bg-deep, #060b1e); color: inherit; border: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; }
-.delve-tape-flags { display: flex; gap: var(--space-2, 8px); }
-.delve-tape-flags button { flex: 1 1 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
-.delve-tape-action { text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
+.delve-modebar { position: sticky; top: 0; left: 0; z-index: 9; flex: 0 0 auto; box-sizing: border-box; height: 52px; padding: 8px; display: flex; gap: var(--space-2, 8px); background: inherit; }
+.delve-modebar .view-switch-key { flex: 1 1 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
+/* The tab bar takes the top 52px; the toolbar and the time header sit below it. */
+html[data-delve-modes] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .delve-bar { top: 52px; }
+html[data-delve-modes] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .grid-time-header { top: 52px; }
+html[data-delve-modes][data-delve-bar] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid .grid-time-header { top: 104px; }
+html[data-delve-tapes-mode] :is(.app--guide, .app--watch:not(.app--channel)) .tv-grid > :not(.delve-modebar):not(.delve-tapes-view) { display: none !important; }
+.delve-tapes-view { position: sticky; left: 0; flex: 1 1 auto; box-sizing: border-box; padding: 0 8px 8px; }
+.delve-tapes-empty { margin: 0; padding: 8px; }
+.delve-tape-head, .delve-tape-row { display: grid; grid-template-columns: 72px minmax(0, 1.2fr) 84px 130px minmax(120px, 1fr) 40px; align-items: center; gap: var(--space-2, 8px); padding: 6px 8px; }
+.delve-tape-head { color: var(--cyan, #00ccdd); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border-color, rgb(38, 82, 178)); }
+.delve-tape-row { border-bottom: 1px solid var(--border-color, rgb(38, 82, 178)); }
+.delve-tape-row[data-flag="broken"] .delve-tape-name { text-decoration: line-through; opacity: .6; }
+.delve-tape-title { display: flex; align-items: baseline; gap: var(--space-2, 8px); min-width: 0; }
+.delve-tape-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.delve-tape-play, .delve-tape-remove { min-height: 30px; padding: 0 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
+.delve-tape-play:disabled { opacity: .4; cursor: default; }
+.delve-tape-flag { width: 100%; min-height: 30px; height: 30px; }
+.delve-tape-note { box-sizing: border-box; width: 100%; height: 30px; padding: 0 8px; background: var(--bg-deep, #060b1e); color: inherit; border: 1px solid var(--border-color, rgb(38, 82, 178)); font: inherit; }
 .guide-actions .delve-tape-save { margin-left: auto; }
 .delve-prog-labelrow .delve-tape-save { margin-left: auto; min-height: 24px; padding: 0 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; cursor: pointer; }
 `;
@@ -157,106 +163,105 @@ html[data-delve-tapes-view] .app--guide .stage-info-col > :not(.delve-tabs):not(
     if (tapeSaveButton && tapeSaveButton.parentNode !== actions) actions.append(tapeSaveButton);
   }
 
-  // The TAPES tab beside INFO in the guide's info column.
-  let tapesTabs = null, tapesPanel = null, tapesView = 'info', openTapeId = '';
-  const infoColumn = () => document.querySelector('.app--guide .stage-info-col');
-  function showInfoTab() {
-    if (tapesView === 'info') return;
-    tapesView = 'info';
-    ensureTapes();
+  // The guide panel gets two tabs, GUIDE and TAPES. TAPES hides the guide and shows the tape stack as a table in its place.
+  const readTapesMode = () => { try { return sessionStorage.getItem(TAPES_MODE_KEY) === '1'; } catch (e) { return false; } };   // kept across the reload Play causes
+  function setTapesMode(on) {
+    tapesMode = on;
+    try { sessionStorage.setItem(TAPES_MODE_KEY, on ? '1' : '0'); } catch (e) { /* the mode is not kept */ }
   }
+  let modeTabs = null, tapeTable = null, tapesMode = readTapesMode();
+  const guidePanel = () => document.querySelector(':is(.app--guide, .app--watch:not(.app--channel)) .tv-grid');
+  const infoColumn = () => document.querySelector('.app--guide .stage-info-col');
   function paintTabs() {
-    if (!tapesTabs) return;
-    tapesTabs.querySelectorAll('button').forEach(b => {
-      const on = b.dataset.view === tapesView;
+    if (!modeTabs) return;
+    modeTabs.querySelectorAll('button').forEach(b => {
+      const on = (b.dataset.view === 'tapes') === tapesMode;
       b.classList.toggle('view-switch-key--on', on);
       b.setAttribute('aria-selected', String(on));
     });
-    tapesTabs.querySelector('[data-view="tapes"]').textContent = 'Tapes (' + tapes.length + ')';
+    modeTabs.querySelector('[data-view="tapes"]').textContent = 'Tapes (' + tapes.length + ')';
+  }
+  // Reload onto the guide with the TAPES channel tuned: the site opens on the channel in localStorage "spelunkr-last-channel".
+  function playFrom(tape) {
+    try {
+      sessionStorage.setItem(TAPES_START_KEY, tapeKey(tape.item));
+      localStorage.setItem('spelunkr-last-channel', TAPES_CHANNEL_ID);
+    } catch (e) { console.warn('[delve] could not tune the TAPES channel; Play from here is unavailable'); return; }
+    location.assign('/');
   }
   function tapeRow(tape) {
-    const open = openTapeId === tapeKey(tape.item);
-    const row = el('div', 'delve-tape');
-    const head = el('button', 'delve-tape-head');
-    head.type = 'button';
-    head.setAttribute('aria-expanded', String(open));
-    head.append(el('span', 'guide-info-now-title delve-tape-title', tape.item.title));
-    if (tape.item.year) head.append(el('span', 'btag btag-ghost', tape.item.year));
-    if (tape.flag) head.append(el('span', 'btag btag-ghost', tape.flag.toUpperCase()));
-    head.append(el('span', 'guide-info-now-desc', fmtDur(tape.item.duration)));
-    head.addEventListener('click', () => { openTapeId = open ? '' : tapeKey(tape.item); renderTapes(); });
-    row.append(head);
-    if (!open) return row;
-
-    const body = el('div', 'delve-tape-body');
-    const note = el('textarea', 'delve-tape-note');
+    const row = el('div', 'delve-tape-row');
+    row.dataset.flag = tape.flag;
+    const play = el('button', 'bbtn bbtn-gold delve-tape-play', 'Play');
+    play.type = 'button';
+    play.disabled = tape.flag === 'broken';
+    play.setAttribute('aria-label', 'Play from ' + tape.item.title);
+    play.addEventListener('click', () => playFrom(tape));
+    const title = el('div', 'delve-tape-title');
+    title.append(el('span', 'delve-tape-name', tape.item.title));
+    if (tape.item.year) title.append(el('span', 'btag btag-ghost', tape.item.year));
+    const flag = el('select', 'delve-select bbtn bbtn-outline delve-tape-flag');
+    flag.setAttribute('aria-label', 'Flag for ' + tape.item.title);
+    TAPE_FLAGS.forEach(([key, name]) => { const o = el('option', null, name); o.value = key; flag.append(o); });
+    flag.value = tape.flag;
+    flag.addEventListener('change', () => { tape.flag = flag.value; saveTapes(); renderTapes(); });
+    const note = el('input', 'delve-tape-note');
+    note.type = 'text';
     note.value = tape.note;
     note.placeholder = 'Note';
     note.setAttribute('aria-label', 'Note for ' + tape.item.title);
     note.addEventListener('input', () => { tape.note = note.value; saveTapes(); });
-    const flags = el('div', 'delve-tape-flags');
-    TAPE_FLAGS.forEach(([key, name]) => {
-      const b = el('button', 'popup-toggle-btn' + (tape.flag === key ? ' popup-toggle-btn--on' : ''), name);
-      b.type = 'button';
-      b.setAttribute('aria-pressed', String(tape.flag === key));
-      b.addEventListener('click', () => { tape.flag = key; saveTapes(); renderTapes(); });
-      flags.append(b);
-    });
-    const remove = el('button', 'bbtn bbtn-outline delve-tape-action delve-tape-remove', 'Remove');
+    const remove = el('button', 'bbtn bbtn-outline delve-tape-remove', '✕');
     remove.type = 'button';
-    remove.addEventListener('click', () => { tapes = tapes.filter(t => t !== tape); openTapeId = ''; saveTapes(); renderTapes(); });
-    body.append(note, flags);
-    if (tape.flag !== 'broken') {
-      const play = el('button', 'bbtn bbtn-gold delve-tape-action', 'Play from here');
-      play.type = 'button';
-      play.addEventListener('click', () => {
-        try { sessionStorage.setItem(TAPES_START_KEY, tapeKey(tape.item)); } catch (e) { /* the channel starts at the first tape */ }
-        location.assign('/' + TAPES_CHANNEL_ID);
-      });
-      body.append(play);
-    }
-    body.append(remove);
-    row.append(body);
+    remove.title = 'Remove';
+    remove.setAttribute('aria-label', 'Remove ' + tape.item.title);
+    remove.addEventListener('click', () => { tapes = tapes.filter(t => t !== tape); saveTapes(); renderTapes(); });
+    row.append(play, title, el('div', 'delve-tape-length', fmtDur(tape.item.duration)), flag, note, remove);
     return row;
   }
   function renderTapes() {
     paintTabs();
     if (tapeSaveButton) tapeSaveButton.repaint();
-    if (!tapesPanel) return;
-    tapesPanel.textContent = '';
+    if (!tapeTable) return;
+    tapeTable.textContent = '';
     if (!tapes.length) {
-      tapesPanel.append(el('p', 'guide-info-now-desc delve-tapes-empty', 'No tapes yet. Open a program in the guide and press Save tape.'));
+      tapeTable.append(el('p', 'delve-tapes-empty', 'No tapes yet. Open a program in the guide and press Save tape.'));
       return;
     }
-    tapes.forEach(tape => tapesPanel.append(tapeRow(tape)));
+    const head = el('div', 'delve-tape-head');
+    ['', 'Tape', 'Length', 'Flag', 'Note', ''].forEach(name => head.append(el('div', null, name)));
+    tapeTable.append(head);
+    tapes.forEach(tape => tapeTable.append(tapeRow(tape)));
   }
   function removeTapesUi() {
-    if (tapesTabs) tapesTabs.remove();
-    if (tapesPanel) tapesPanel.remove();
+    if (modeTabs) modeTabs.remove();
+    if (tapeTable) tapeTable.remove();
     removeSaveButton();
-    root.removeAttribute('data-delve-tapes-view');
+    root.removeAttribute('data-delve-modes');
+    root.removeAttribute('data-delve-tapes-mode');
   }
   function ensureTapes() {
+    const grid = settings.tapesOn ? guidePanel() : null;
     const col = settings.tapesOn ? infoColumn() : null;
-    if (!col) { removeTapesUi(); return; }
-    if (!tapesTabs) {
-      tapesTabs = el('div', 'delve-tabs cv-tabs view-switch');
-      tapesTabs.setAttribute('role', 'tablist');
-      [['info', 'Info'], ['tapes', 'Tapes']].forEach(([view, name]) => {
+    if (col) ensureSaveButton(col); else removeSaveButton();
+    if (!grid) { removeTapesUi(); return; }
+    if (!modeTabs) {
+      modeTabs = el('div', 'delve-modebar cv-tabs view-switch');
+      modeTabs.setAttribute('role', 'tablist');
+      [['guide', 'Guide'], ['tapes', 'Tapes']].forEach(([view, name]) => {
         const b = el('button', 'view-switch-key bbtn bbtn-outline', name);
         b.type = 'button';
         b.setAttribute('role', 'tab');
         b.dataset.view = view;
-        b.addEventListener('click', () => { tapesView = view; ensureTapes(); });
-        tapesTabs.append(b);
+        b.addEventListener('click', () => { setTapesMode(view === 'tapes'); ensureTapes(); });
+        modeTabs.append(b);
       });
     }
-    if (tapesTabs.parentNode !== col || col.firstElementChild !== tapesTabs) col.prepend(tapesTabs);
-    ensureSaveButton(col);
-    const showTapes = tapesView === 'tapes';
-    if (root.hasAttribute('data-delve-tapes-view') !== showTapes) root.toggleAttribute('data-delve-tapes-view', showTapes);
-    if (!showTapes) { if (tapesPanel) tapesPanel.remove(); paintTabs(); return; }
-    if (!tapesPanel) tapesPanel = el('div', 'delve-tapes');
-    if (tapesPanel.parentNode !== col) { col.append(tapesPanel); renderTapes(); }
+    if (grid.firstElementChild !== modeTabs) grid.prepend(modeTabs);
+    if (!root.hasAttribute('data-delve-modes')) root.setAttribute('data-delve-modes', '1');
+    if (root.hasAttribute('data-delve-tapes-mode') !== tapesMode) root.toggleAttribute('data-delve-tapes-mode', tapesMode);
+    if (!tapesMode) { if (tapeTable) tapeTable.remove(); paintTabs(); return; }
+    if (!tapeTable) tapeTable = el('div', 'delve-tapes-view');
+    if (tapeTable.parentNode !== grid) { grid.append(tapeTable); renderTapes(); }
     paintTabs();
   }

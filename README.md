@@ -160,12 +160,13 @@ The total number of people watching, copied from the site's own figure: a badge 
 
 A personal playlist of programs. With this on, a **☆ Save tape** button appears at the right end of the guide's WATCH / VIEW CHANNEL row, for the program whose card is open or, when no card is open, for the one the site's Now playing block shows (this needs Program information on, which finds the program); saved programs show **★ Saved**, and pressing it again removes the tape. (In Split's watch view, where the guide sits below the player, the button is at the top of the card instead.) Marathon blocks have no single video and can't be saved.
 
-The guide's info column gets two tabs, **INFO** and **TAPES (n)**. TAPES lists your tapes with their year and length. Click a tape to open it:
+The guide panel gets two tabs, **GUIDE** and **TAPES (n)**. TAPES hides the guide and turns the panel into the tape stack: a table with one row per tape.
 
+- **Play**: reloads the guide with the TAPES channel tuned in the preview, starting at that tape; you stay in the guide and on the TAPES tab (disabled for Broken tapes)
+- the tape's title, year and length
+- a **flag**: **Normal**, **Broken** (struck through) or **Quiet**
 - a **note** (saved as you type)
-- a flag: **Normal**, **Broken** or **Quiet**, shown as a tag on the tape
-- **Play from here**: reloads the page onto the TAPES channel with this tape first (not shown for Broken tapes)
-- **Remove**
+- **✕** to remove the tape
 
 The tapes also play as a channel. When you have saved tapes, a **TAPES** channel is added to the guide (the first free dial number from 99) and plays them one after another, looping, starting when the page loads, or at the tape you chose with **Play from here**. You tune it, watch it and rewind it like any other channel. Tapes marked **Broken** are left out of it. The channel is built when the page loads, so changes to your tapes show up in it after a reload.
 
