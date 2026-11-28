@@ -2,6 +2,14 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.42.0 - 2026-11-28
+- The TAPES tab now has two views, Saved and Stack.
+- Saved lists every tape you saved, where you edit the flag and note, remove a tape, or add it to the stack.
+- Stack is the playlist of the TAPES channel. Drag the handle to reorder tapes, switch each one On or Off, press Play to start the channel at a tape, or take a tape out of the stack without un-saving it.
+- The TAPES channel plays only the tapes in the stack that are On, in stack order. Broken tapes are always Off.
+- Saved tapes are no longer in the stack until you add them.
+- On a phone the tape rows fit the screen.
+
 ## 0.41.1 - 2026-11-28
 - The TAPES channel now has the channel number -1. The site shows it as -- and lists it last in the guide.
 

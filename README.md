@@ -160,15 +160,24 @@ The total number of people watching, copied from the site's own figure: a badge 
 
 A personal playlist of programs. With this on, a **☆ Save tape** button appears at the right end of the guide's WATCH / VIEW CHANNEL row, for the program whose card is open or, when no card is open, for the one the site's Now playing block shows (this needs Program information on, which finds the program); saved programs show **★ Saved**, and pressing it again removes the tape. (In Split's watch view, where the guide sits below the player, the button is at the top of the card instead.) Marathon blocks have no single video and can't be saved.
 
-The guide panel gets two tabs, **GUIDE** and **TAPES (n)**. TAPES hides the guide and turns the panel into the tape stack: a table with one row per tape.
+The guide panel gets two tabs, **GUIDE** and **TAPES (n)**. TAPES hides the guide and shows your tapes in two views, **Saved** and **Stack**.
 
-- **Play**: reloads the guide with the TAPES channel tuned in the preview, starting at that tape; you stay in the guide and on the TAPES tab (disabled for Broken tapes)
+**Saved** is every tape you have saved, one row each, for editing and removing:
+
+- **Add**: puts the tape at the end of the stack (it shows **In stack** once added)
 - the tape's title, year and length
 - a **flag**: **Normal**, **Broken** (struck through) or **Quiet**
 - a **note** (saved as you type)
-- **✕** to remove the tape
+- **✕** to remove the tape from your saved tapes (it leaves the stack too)
 
-The tapes also play as a channel. When you have saved tapes, a **TAPES** channel is added at the bottom of the guide (the site shows its number as `--`) and plays them one after another, looping, starting when the page loads, or at the tape you chose with **Play from here**. You tune it, watch it and rewind it like any other channel. Tapes marked **Broken** are left out of it. The channel is built when the page loads, so changes to your tapes show up in it after a reload.
+**Stack** is the playlist of the TAPES channel, in play order. Tapes are not in it until you add them from Saved.
+
+- **☰**: drag a row to reorder the stack
+- **Play**: reloads the guide with the TAPES channel tuned in the preview, starting at that tape; you stay in the guide and on the TAPES tab
+- **On / Off**: whether the channel plays the tape. A Broken tape is always Off and can't be switched on until you change its flag
+- **✕** takes the tape out of the stack and keeps it saved
+
+The tapes in the stack also play as a channel. When the stack has tapes that are On, a **TAPES** channel is added at the bottom of the guide (the site shows its number as `--`) and plays them in stack order, one after another, looping, starting when the page loads, or at the tape you chose with **Play**. You tune it, watch it and rewind it like any other channel. The channel is built when the page loads, so changes to the stack show up in it after a reload.
 
 Tapes are stored by Delve in your browser, apart from the settings, so **Reset all settings** keeps them and switching the feature off keeps them too. Nothing is sent anywhere; the TAPES channel exists only in your browser, and the site's player plays the same archive.org video files it plays for any channel.
 
@@ -283,7 +292,7 @@ About once an hour Delve reads the version number of the published script on Git
 
 ## Your settings
 
-Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, hidden channels, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, the auto spelunk interval and its All channels / Favorites choice, and the feature switches. Your saved tapes are stored separately. None of it is sent anywhere.
+Everything is saved by Tampermonkey, in your browser, and kept between visits: view type, video side, favorites, the favorites-only toggle, hidden channels, sort, window size, volume, mute, the audio settings (boost, leveling and its target, night mode, hiss reduction, Mono and its choice, sync), the picture settings, the Hide choice, the watermark settings, the auto spelunk interval and its All channels / Favorites choice, and the feature switches. Your saved tapes and the stack are stored separately. None of it is sent anywhere.
 
 ## Troubleshooting
 
