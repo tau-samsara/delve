@@ -2,6 +2,9 @@
 
 What changed in each Delve version, newest first. Also shown in the Delve menu.
 
+## 0.39.15 - 2026-11-27
+- Fixed: the header clock no longer stops when 24-hour time is on.
+
 ## 0.39.14 - 2026-11-26
 - Changed: Mono Auto now picks Mix when the left and right sides differ by 1 dB or more (was 1.5 dB). Mildly uneven files are now caught.
 

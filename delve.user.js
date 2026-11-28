@@ -2,7 +2,7 @@
 // @name         Delve
 // @namespace    https://spelunkr.tv/
 // @author       tau-samsara
-// @version      0.39.14
+// @version      0.39.15
 // @description  Adds quality-of-life features to spelunkr.tv that are commonly requested in the official discord feature-requests channel
 // @updateURL    https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
 // @downloadURL  https://raw.githubusercontent.com/tau-samsara/delve/main/delve.user.js
@@ -4050,9 +4050,23 @@ html[data-delve-hide-reactions] :is(.reaction-heat, .reaction-animator) { displa
   const TIME_TEXT = '.prevue-header-clock, .grid-time-label, .guide-info-upcoming-time, .player-upcoming-time';
   const TIME_TIP = '.grid-program[title]';
   const timeOf = e => e.matches(TIME_TIP) ? e.title : e.textContent;
-  const setTimeOf = (e, value) => { if (e.matches(TIME_TIP)) e.title = value; else e.textContent = value; };
+  // Edit the existing text node: replacing it (textContent) leaves the site updating a detached node, so the clock freezes.
+  const setTimeOf = (e, value) => {
+    if (e.matches(TIME_TIP)) e.title = value;
+    else if (e.childNodes.length === 1 && e.firstChild.nodeType === Node.TEXT_NODE) e.firstChild.data = value;
+    else e.textContent = value;
+  };
+  // The header clock changes every second; convert it as soon as the site writes it, not on the next timer tick.
+  const clockWatcher = new MutationObserver(() => ensureClock24());
+  function watchHeaderClock() {
+    const clock = document.querySelector('.prevue-header-clock');
+    if (!clock || clock.dataset.delveWatched) return;
+    clock.dataset.delveWatched = '';
+    clockWatcher.observe(clock, { characterData: true, childList: true, subtree: true });
+  }
   function ensureClock24() {
     if (settings.clock24) {
+      watchHeaderClock();
       document.querySelectorAll(TIME_TEXT + ', ' + TIME_TIP).forEach(e => {
         if (e.matches(TIME_TEXT) && e.children.length) return;
         const was = timeOf(e), shown = to24h(was);
